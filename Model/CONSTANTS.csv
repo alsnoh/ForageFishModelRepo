@@ -1,0 +1,12 @@
+Parameter,value,Ctype,lower,upper
+A1,0.82,double,0.73,0.91
+A2,0.0076,double,0.0075,0.0077
+Ua,0.12,double,0.02,0.12
+handling_time,0.0138888888888889,double,0.0111111111111111,0.0166666666666667
+swimming_speed,1.5,double,0.5,2
+C,0.23,double,0.2,0.26
+dec_dist_scale,0.5,double,0.333333333333333,1
+kR,3.5,double,2,5
+z,30,double,0,70
+b,5.095,double,4.075,6.115
+m,-1.9,double,-2,-1.8

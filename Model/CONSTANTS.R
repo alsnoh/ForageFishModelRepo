@@ -1,0 +1,11 @@
+A1=0.82
+A2=0.0076
+Ua=0.12
+handling_time=0.0138888888888889
+swimming_speed=1.5
+C=0.23
+dec_dist_scale=0.5
+kR=3.5
+z=30
+b=5.095
+m=-1.9
