@@ -15,8 +15,8 @@ JD_ADDED <- 141
 L0 <- 4 
 
 # parameters
-#assimilation <- 0.4
-k <- 0.1
+assimilation <- 0.4
+k <- 0.2
 #MaxLength <- 12
 
 length_DF <- data.frame()
@@ -63,10 +63,7 @@ source("Model/CalculateMaxLength.R")
 
 #temperature-dependent assimilation
 
-assimilationV <- c()
-for(iday in 1:length(input_id)) {
-    assimilationV[iday] = (A1 + A2*temp[iday])-Ua
-}
+
 
 source("Model/getr.R")
 
@@ -81,9 +78,9 @@ for (iyear in 1:length(ModelRunLengths)) {
     LENGTH_daily <- numeric(NoDays)
 
     # Calculate max length
-    MaxLength <- CalculateMaxLengh(iyear, NoDays, assimilationV, LENGTH)
+    MaxLength <- CalculateMaxLengh(iyear, NoDays, LENGTH)
 
-    results_DF <- CalculateAssimilation(iyear, NoDays, i_dailys, LENGTH_daily, MaxLength, assimilationV)
+    results_DF <- CalculateAssimilation(iyear, NoDays, i_dailys, LENGTH_daily, MaxLength)
 
     # Reset initial length every year
     LENGTH <- L0

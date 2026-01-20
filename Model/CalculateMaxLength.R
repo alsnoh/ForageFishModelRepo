@@ -1,7 +1,7 @@
 
 # Calculate theoretical max length, as defined by how long fish would become after one growth season if there was infinite food
 
-CalculateMaxLengh <- function(iyear, NoDays, assimilationV, LENGTH) {
+CalculateMaxLengh <- function(iyear, NoDays, LENGTH) {
 
     i_max <- 1 / handling_time
     MaxLength <- 0
@@ -9,7 +9,6 @@ CalculateMaxLengh <- function(iyear, NoDays, assimilationV, LENGTH) {
     for (iday in 1:NoDays){
 
         h_feed <- DayLengths[iday + NoDays * (iyear - 1)]
-        assimilation <- assimilationV[iday + NoDays * (iyear - 1)]
 
         A_max <- assimilation * h_feed * i_max
 

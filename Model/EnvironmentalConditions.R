@@ -39,10 +39,10 @@ z = CONSTANTS$value[CONSTANTS$Parameter == "z"] # depth
   longitude = locations$centre_long[locations$loc == scenario]
   
   # temperature 
-  temp = read.csv(paste0("data/tempData/temp_", scenario, ".csv"), sep = ",")
-  temp = temp$temp[yday(temp$date) >= JD_ADDED & yday(temp$date)<= JD_FINISH]
-  # constant temp
-  tempConst <- rep(1, length(temp)) 
+  # temp = read.csv(paste0("data/tempData/temp_", scenario, ".csv"), sep = ",")
+  # temp = temp$temp[yday(temp$date) >= JD_ADDED & yday(temp$date)<= JD_FINISH]
+  # # constant temp
+  # tempConst <- rep(1, length(temp)) 
     
   # day lengths
   DayLengths = rep( round(daylength(latitude, JD_ADDED:JD_FINISH)), max(input_id))

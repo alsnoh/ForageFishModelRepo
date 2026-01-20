@@ -1,12 +1,11 @@
 # Construct and solve van bertalanffy growth equation with ingestion term
 
-CalculateAssimilation <- function(iyear, NoDays, i_dailys, LENGTH_daily, MaxLength, assimilationV) {
+CalculateAssimilation <- function(iyear, NoDays, i_dailys, LENGTH_daily, MaxLength) {
 
     for (iday in 1:NoDays){
 
         JulianDay <- JulianDayV[iday]
         h_feed <- DayLengths[iday + NoDays * (iyear - 1)]
-        assimilation <- assimilationV[iday + NoDays * (iyear - 1)]
 
         #initialise numerator of functional response for each prey class (mode) to be summed
         func_response_numerator <- numeric(NoModes)
