@@ -79,6 +79,6 @@ CalculateAssimilation <- function(iyear, NoDays, i_dailys, LENGTH_daily, MaxLeng
         
         
     }
-    results_DF <- data.frame(assimilated_energy = i_dailys, length = LENGTH_daily, jd = JulianDayV)
+    results_DF <- data.frame(assimilated_energy = i_dailys, length = LENGTH_daily, jd = JulianDayV[1:72])
     return(results_DF)
 }
