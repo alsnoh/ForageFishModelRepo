@@ -1,6 +1,6 @@
 # Construct and solve van bertalanffy growth equation with ingestion term
 
-CalculateAssimilation <- function(iyear, NoDays, i_dailys, LENGTH_daily, MaxLength, assimilationV) {
+CalculateAssimilation <- function(iyear, NoDays, i_dailys, WEIGHT_daily, LENGTH_daily, MaxWEIGHT, assimilationV) {
 
     for (iday in 1:NoDays){
 
@@ -74,11 +74,13 @@ CalculateAssimilation <- function(iyear, NoDays, i_dailys, LENGTH_daily, MaxLeng
 
         i_dailys[iday] <- i_daily
 
+        WEIGHT_daily[iday] <- WEIGHT
         LENGTH_daily[iday] <- LENGTH
-        LENGTH <- k * i_dailys[iday] * (MaxLength - LENGTH) + LENGTH
+        WEIGHT <- k * i_dailys[iday] * (MaxWEIGHT - WEIGHT) + WEIGHT
+        LENGTH <- (WEIGHT / a1)^(1/a2) # update length based on new weight
         
         
     }
-    results_DF <- data.frame(assimilated_energy = i_dailys, length = LENGTH_daily, jd = JulianDayV[1:72])
+    results_DF <- data.frame(assimilated_energy = i_dailys, weight = WEIGHT_daily, length = LENGTH_daily, jd = JulianDayV[1:72])
     return(results_DF)
 }

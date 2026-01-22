@@ -12,14 +12,18 @@ rm(list = ls())
 
 # Initial Conditions
 JD_ADDED <- 141 
-L0 <- 4 
+W0 <- 0.14
+#linear regression parameters for length-weight relationship
+a1 <- exp(-6.8488)
+a2 <- 3.4943
+L0 <- (W0/a1)^(1/a2) # initial length in cm 
 
 # parameters
 #assimilation <- 0.4
 k <- 0.1
 #MaxLength <- 12
 
-length_DF <- data.frame()
+DF <- data.frame()
 
 #~~~~~~~~~~~ REQUIRED PACKAGES ~~~~~~~~~~#
 
@@ -55,7 +59,8 @@ source("Model/EnvironmentalConditions.R")
 # loading function to calculate predicted length for one growth season, based on von bertalanffy
 source("Model/CalculateAssimilation.R")
 
-source("Model/CalculateMaxLength.R")
+#source("Model/CalculateMaxWeight.R")
+MaxWEIGHT <- 2
 
 
 
@@ -70,6 +75,7 @@ for(iday in 1:length(input_id)) {
 
 source("Model/getr.R")
 
+WEIGHT <- W0
 LENGTH <- L0
 # Main model loop, calculating model results for each year
 for (iyear in 1:length(ModelRunLengths)) {
@@ -78,17 +84,19 @@ for (iyear in 1:length(ModelRunLengths)) {
     NoDays <- ModelRunLengths[iyear]
     current_year <- rep(prey_abundance[1 + NoDays * (iyear - 1),2], NoDays)
     i_dailys <- numeric(NoDays)
+    WEIGHT_daily <- numeric(NoDays)
     LENGTH_daily <- numeric(NoDays)
 
-    # Calculate max length
-    MaxLength <- CalculateMaxLengh(iyear, NoDays, assimilationV, LENGTH)
+    # Calculate max weight
+    #MaxWEIGHT <- CalculateMaxWeight(iyear, NoDays, assimilationV, WEIGHT)
 
-    results_DF <- CalculateAssimilation(iyear, NoDays, i_dailys, LENGTH_daily, MaxLength, assimilationV)
+    results_DF <- CalculateAssimilation(iyear, NoDays, i_dailys, WEIGHT_daily, LENGTH_daily, MaxWEIGHT, assimilationV)
 
-    # Reset initial length every year
+    # Reset initial conditions every year
+    WEIGHT <- W0
     LENGTH <- L0
-    LENGTH_daily_year <- data.frame(year = current_year, assimilated_energy = results_DF$assimilated_energy, length = results_DF$length, jd = results_DF$jd)
-    length_DF <- rbind(length_DF,LENGTH_daily_year)
+    LENGTH_daily_year <- data.frame(year = current_year, assimilated_energy = results_DF$assimilated_energy, weight = results_DF$weight, length = results_DF$length, jd = results_DF$jd)
+    DF <- rbind(DF,LENGTH_daily_year)
 
 }
 
