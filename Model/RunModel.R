@@ -44,7 +44,7 @@ suppressMessages(library(jsonlite))
 locations <- read.delim("data/locations.csv")
 
 # pick location "FoF", "DB", "Shetland", "ECG"
-scenario <- "FoF"
+scenario <- "ECG"
 
 # load constants
 CONSTANTS <- read.csv("Model/CONSTANTS.csv")
@@ -60,7 +60,7 @@ source("Model/EnvironmentalConditions.R")
 source("Model/CalculateAssimilation.R")
 
 #source("Model/CalculateMaxWeight.R")
-MaxWEIGHT <- 2
+MaxWEIGHT <- 5
 
 
 
@@ -83,20 +83,17 @@ for (iyear in 1:length(ModelRunLengths)) {
 
     NoDays <- ModelRunLengths[iyear]
     current_year <- rep(prey_abundance[1 + NoDays * (iyear - 1),2], NoDays)
-    i_dailys <- numeric(NoDays)
-    WEIGHT_daily <- numeric(NoDays)
-    LENGTH_daily <- numeric(NoDays)
 
     # Calculate max weight
     #MaxWEIGHT <- CalculateMaxWeight(iyear, NoDays, assimilationV, WEIGHT)
 
-    results_DF <- CalculateAssimilation(iyear, NoDays, i_dailys, WEIGHT_daily, LENGTH_daily, MaxWEIGHT, assimilationV)
+    results_DF <- CalculateAssimilation(iyear, NoDays, MaxWEIGHT, assimilationV)
 
     # Reset initial conditions every year
     WEIGHT <- W0
     LENGTH <- L0
-    LENGTH_daily_year <- data.frame(year = current_year, assimilated_energy = results_DF$assimilated_energy, weight = results_DF$weight, length = results_DF$length, jd = results_DF$jd)
-    DF <- rbind(DF,LENGTH_daily_year)
+    results_daily_year <- data.frame(year = current_year, assimilated_energy = results_DF$assimilated_energy, ingested_energy = results_DF$ingested_energy, Weight = results_DF$weight, Length = results_DF$length, JulianDay = results_DF$jd)
+    DF <- rbind(DF,results_daily_year)
 
 }
 

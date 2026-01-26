@@ -1,6 +1,11 @@
 # Construct and solve van bertalanffy growth equation with ingestion term
 
-CalculateAssimilation <- function(iyear, NoDays, i_dailys, WEIGHT_daily, LENGTH_daily, MaxWEIGHT, assimilationV) {
+CalculateAssimilation <- function(iyear, NoDays, MaxWEIGHT, assimilationV) {
+
+    i_dailys <- numeric(NoDays)
+    A_dailys <- numeric(NoDays)
+    WEIGHT_daily <- numeric(NoDays)
+    LENGTH_daily <- numeric(NoDays)
 
     for (iday in 1:NoDays){
 
@@ -68,19 +73,20 @@ CalculateAssimilation <- function(iyear, NoDays, i_dailys, WEIGHT_daily, LENGTH_
                 i_daily <- i_daily + i_hourly
             }
 
-            i_daily <- i_daily*assimilation #account for assimilation efficiency
             i_daily <- i_daily/1000 # put into kJ
+            A_daily <- i_daily*assimilation #account for assimilation efficiency
         }
 
         i_dailys[iday] <- i_daily
+        A_dailys[iday] <- A_daily
 
         WEIGHT_daily[iday] <- WEIGHT
         LENGTH_daily[iday] <- LENGTH
-        WEIGHT <- k * i_dailys[iday] * (MaxWEIGHT - WEIGHT) + WEIGHT
+        WEIGHT <- k * A_dailys[iday] * (MaxWEIGHT - WEIGHT) + WEIGHT
         LENGTH <- (WEIGHT / a1)^(1/a2) # update length based on new weight
         
         
     }
-    results_DF <- data.frame(assimilated_energy = i_dailys, weight = WEIGHT_daily, length = LENGTH_daily, jd = JulianDayV[1:72])
+    results_DF <- data.frame(assimilated_energy = A_dailys, ingested_energy = i_dailys, weight = WEIGHT_daily, length = LENGTH_daily, jd = JulianDayV[1:72])
     return(results_DF)
 }
