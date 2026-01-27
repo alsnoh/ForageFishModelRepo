@@ -6,12 +6,21 @@ CalculateAssimilation <- function(iyear, NoDays, MaxWEIGHT, assimilationV) {
     A_dailys <- numeric(NoDays)
     WEIGHT_daily <- numeric(NoDays)
     LENGTH_daily <- numeric(NoDays)
+    h_feeds <- numeric(NoDays)
 
     for (iday in 1:NoDays){
 
         JulianDay <- JulianDayV[iday]
-        h_feed <- DayLengths[iday + NoDays * (iyear - 1)]
+        h_feed_max <- DayLengths[iday + NoDays * (iyear - 1)]
         assimilation <- assimilationV[iday + NoDays * (iyear - 1)]
+
+        feeding_time_fraction <- (MaxWEIGHT-WEIGHT)/MaxWEIGHT # fraction of max weight determines time spent feeding
+        if(feeding_time_fraction < 0) {
+            feeding_time_fraction <- 0
+        }
+
+        h_feed <- floor(h_feed_max * feeding_time_fraction) # hours spent feeding
+       #h_feed <- h_feed_max # hours spent feeding
 
         #initialise numerator of functional response for each prey class (mode) to be summed
         func_response_numerator <- numeric(NoModes)
@@ -80,13 +89,17 @@ CalculateAssimilation <- function(iyear, NoDays, MaxWEIGHT, assimilationV) {
         i_dailys[iday] <- i_daily
         A_dailys[iday] <- A_daily
 
+        h_feeds[iday] <- h_feed
+
         WEIGHT_daily[iday] <- WEIGHT
         LENGTH_daily[iday] <- LENGTH
-        WEIGHT <- k * A_dailys[iday] * (MaxWEIGHT - WEIGHT) + WEIGHT
+        #WEIGHT <- k * A_dailys[iday] * (MaxWEIGHT - WEIGHT) + WEIGHT
+        WEIGHT <- k * A_dailys[iday] + WEIGHT
         LENGTH <- (WEIGHT / a1)^(1/a2) # update length based on new weight
         
         
     }
-    results_DF <- data.frame(assimilated_energy = A_dailys, ingested_energy = i_dailys, weight = WEIGHT_daily, length = LENGTH_daily, jd = JulianDayV[1:72])
+    results_DF <- data.frame(assimilated_energy = A_dailys, ingested_energy = i_dailys, weight = WEIGHT_daily, length = LENGTH_daily, jd = JulianDayV[1:72], feeding_hours = h_feeds)
+    
     return(results_DF)
 }

@@ -20,7 +20,7 @@ L0 <- (W0/a1)^(1/a2) # initial length in cm
 
 # parameters
 #assimilation <- 0.4
-k <- 0.1
+k <- 0.15
 #MaxLength <- 12
 
 DF <- data.frame()
@@ -44,7 +44,7 @@ suppressMessages(library(jsonlite))
 locations <- read.delim("data/locations.csv")
 
 # pick location "FoF", "DB", "Shetland", "ECG"
-scenario <- "ECG"
+scenario <- "FoF"
 
 # load constants
 CONSTANTS <- read.csv("Model/CONSTANTS.csv")
@@ -60,7 +60,7 @@ source("Model/EnvironmentalConditions.R")
 source("Model/CalculateAssimilation.R")
 
 #source("Model/CalculateMaxWeight.R")
-MaxWEIGHT <- 5
+MaxWEIGHT <- 2
 
 
 
@@ -92,7 +92,7 @@ for (iyear in 1:length(ModelRunLengths)) {
     # Reset initial conditions every year
     WEIGHT <- W0
     LENGTH <- L0
-    results_daily_year <- data.frame(year = current_year, assimilated_energy = results_DF$assimilated_energy, ingested_energy = results_DF$ingested_energy, Weight = results_DF$weight, Length = results_DF$length, JulianDay = results_DF$jd)
+    results_daily_year <- data.frame(year = current_year, assimilated_energy = results_DF$assimilated_energy, ingested_energy = results_DF$ingested_energy, Weight = results_DF$weight, Length = results_DF$length, JulianDay = results_DF$jd, feeding_hours = results_DF$feeding_hours)
     DF <- rbind(DF,results_daily_year)
 
 }
