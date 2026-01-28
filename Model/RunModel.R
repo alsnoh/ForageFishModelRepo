@@ -20,7 +20,7 @@ L0 <- (W0/a1)^(1/a2) # initial length in cm
 
 # parameters
 #assimilation <- 0.4
-k <- 0.15
+k <- 0.3
 #MaxLength <- 12
 
 DF <- data.frame()
@@ -44,7 +44,7 @@ suppressMessages(library(jsonlite))
 locations <- read.delim("data/locations.csv")
 
 # pick location "FoF", "DB", "Shetland", "ECG"
-scenario <- "FoF"
+scenario <- "DB"
 
 # load constants
 CONSTANTS <- read.csv("Model/CONSTANTS.csv")

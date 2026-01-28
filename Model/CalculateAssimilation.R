@@ -99,7 +99,7 @@ CalculateAssimilation <- function(iyear, NoDays, MaxWEIGHT, assimilationV) {
         
         
     }
-    results_DF <- data.frame(assimilated_energy = A_dailys, ingested_energy = i_dailys, weight = WEIGHT_daily, length = LENGTH_daily, jd = JulianDayV[1:72], feeding_hours = h_feeds)
+    results_DF <- data.frame(assimilated_energy = A_dailys, ingested_energy = A_dailys, weight = WEIGHT_daily, length = LENGTH_daily, jd = JulianDayV[1:72], feeding_hours = h_feeds)
     
     return(results_DF)
 }
