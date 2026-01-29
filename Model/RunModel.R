@@ -44,7 +44,7 @@ suppressMessages(library(jsonlite))
 locations <- read.delim("data/locations.csv")
 
 # pick location "FoF", "DB", "Shetland", "ECG"
-scenario <- "DB"
+scenario <- "FoF"
 
 # load constants
 CONSTANTS <- read.csv("Model/CONSTANTS.csv")
@@ -60,7 +60,7 @@ source("Model/EnvironmentalConditions.R")
 source("Model/CalculateAssimilation.R")
 
 #source("Model/CalculateMaxWeight.R")
-MaxWEIGHT <- 2
+MaxWEIGHT <- 5
 
 
 
@@ -92,7 +92,7 @@ for (iyear in 1:length(ModelRunLengths)) {
     # Reset initial conditions every year
     WEIGHT <- W0
     LENGTH <- L0
-    results_daily_year <- data.frame(year = current_year, assimilated_energy = results_DF$assimilated_energy, ingested_energy = results_DF$ingested_energy, Weight = results_DF$weight, Length = results_DF$length, JulianDay = results_DF$jd, feeding_hours = results_DF$feeding_hours)
+    results_daily_year <- data.frame(year = current_year, assimilated_weight = results_DF$assimilated_weight, ingested_weight = results_DF$ingested_weight, Weight = results_DF$weight, Length = results_DF$length, JulianDay = results_DF$jd, feeding_hours = results_DF$feeding_hours)
     DF <- rbind(DF,results_daily_year)
 
 }

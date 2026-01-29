@@ -50,7 +50,7 @@ CalculateAssimilation <- function(iyear, NoDays, MaxWEIGHT, assimilationV) {
 
             for(imode in 1:NoModes){ # adding on to respective numerators/denominators if type matches mode
 
-                func_response_numerator[imode] <- func_response_numerator[imode] + capture_rate * prey_energy[itaxa] * (prey_mode[itaxa]==imode)
+                func_response_numerator[imode] <- func_response_numerator[imode] + capture_rate * prey_energy[itaxa]/prey_ed[itaxa] * (prey_mode[itaxa]==imode)
                 denominator[imode] <- denominator[imode] + capture_rate * handling_time * (prey_mode[itaxa]==imode)
             }
 
@@ -69,7 +69,7 @@ CalculateAssimilation <- function(iyear, NoDays, MaxWEIGHT, assimilationV) {
 
         i_daily <- 0
 
-        # calculating maximum ingested energy per hour (assuming the sandeels spend time in each mode in proportion to the profitability of each mode)
+        # calculating maximum ingested weight per hour (assuming the sandeels spend time in each mode in proportion to the profitability of each mode)
         if(total_max != 0) {
             i_hourly <- 0
             for (imode in 1:NoModes){
@@ -82,7 +82,6 @@ CalculateAssimilation <- function(iyear, NoDays, MaxWEIGHT, assimilationV) {
                 i_daily <- i_daily + i_hourly
             }
 
-            i_daily <- i_daily/1000 # put into kJ
             A_daily <- i_daily*assimilation #account for assimilation efficiency
         }
 
@@ -95,11 +94,12 @@ CalculateAssimilation <- function(iyear, NoDays, MaxWEIGHT, assimilationV) {
         LENGTH_daily[iday] <- LENGTH
         #WEIGHT <- k * A_dailys[iday] * (MaxWEIGHT - WEIGHT) + WEIGHT
         WEIGHT <- k * A_dailys[iday] + WEIGHT
-        LENGTH <- (WEIGHT / a1)^(1/a2) # update length based on new weight
+        LENGTHcoeff <- LENGTH^(1-a2)/(a1*a2)
+        LENGTH <- k * LENGTHcoeff * A_dailys[iday] + LENGTH
         
         
     }
-    results_DF <- data.frame(assimilated_energy = A_dailys, ingested_energy = A_dailys, weight = WEIGHT_daily, length = LENGTH_daily, jd = JulianDayV[1:72], feeding_hours = h_feeds)
+    results_DF <- data.frame(assimilated_weight = A_dailys, ingested_weight = i_dailys, weight = WEIGHT_daily, length = LENGTH_daily, jd = JulianDayV[1:72], feeding_hours = h_feeds)
     
     return(results_DF)
 }
