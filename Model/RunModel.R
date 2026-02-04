@@ -70,7 +70,7 @@ MaxWEIGHT <- 5
 
 assimilationV <- c()
 for(iday in 1:length(input_id)) {
-    assimilationV[iday] = (A1 + A2*tempConst[iday])-Ua
+    assimilationV[iday] = (A1 + A2*temp[iday])-Ua
 }
 
 source("Model/getr.R")
