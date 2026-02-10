@@ -11,7 +11,8 @@ CalculateAssimilation <- function(iyear, NoDays, MaxWEIGHT, assimilationV) {
     for (iday in 1:NoDays){
 
         JulianDay <- JulianDayV[iday]
-        h_feed_max <- DayLengths[iday + NoDays * (iyear - 1)]
+        #h_feed_max <- DayLengths[iday + NoDays * (iyear - 1)]
+        h_feed_max <- DayLengthsConst[iday + NoDays * (iyear - 1)] # for controlled experiments
         assimilation <- assimilationV[iday + NoDays * (iyear - 1)]
 
         feeding_time_fraction <- (MaxWEIGHT-WEIGHT)/MaxWEIGHT # fraction of max weight determines time spent feeding
@@ -36,14 +37,14 @@ CalculateAssimilation <- function(iyear, NoDays, MaxWEIGHT, assimilationV) {
             detection_distance <- getr(ab, 
                                     (prey_image_area[itaxa]/1000000),
                                     E,
-                                    light[iday + NoDays * (iyear - 1)], 
+                                    lightConst[iday + NoDays * (iyear - 1)], # lightConst for controlled experiments, light for actual data
                                         kR,
                                         0.001)
 
             search_rate <- pi*(detection_distance^2)*swimming_speed*60*60 * ( (LENGTH )/100 ) 
 
             efficiency <- 1*(1-(1/(1+exp(-b* (log(prey_size[itaxa] /10.0 ) -  m  )  )))) # ok but decline in DB not so clear
-            abundance <- prey_abundance[iday + NoDays * (iyear - 1), itaxa + 3]; # abundance of prey type on given day
+            abundance <- prey_abundanceConst[iday + NoDays * (iyear - 1), itaxa + 3]; # abundance of prey type on given day use  prey_abundanceConst for controlled experiments
             capture_rate <- efficiency * search_rate * abundance # capture rate ignoring handling time
 
 

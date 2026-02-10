@@ -20,7 +20,7 @@ L0 <- (W0/a1)^(1/a2) # initial length in cm
 
 # parameters
 #assimilation <- 0.4
-k <- 0.3
+k <- 0.2
 #MaxLength <- 12
 
 DF <- data.frame()
@@ -70,7 +70,7 @@ MaxWEIGHT <- 5
 
 assimilationV <- c()
 for(iday in 1:length(input_id)) {
-    assimilationV[iday] = (A1 + A2*temp[iday])-Ua
+    assimilationV[iday] = (A1 + A2*tempConst[iday])-Ua   # tempConst for controlled experiments, temp for data
 }
 
 source("Model/getr.R")

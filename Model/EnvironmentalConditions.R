@@ -26,9 +26,13 @@ z = CONSTANTS$value[CONSTANTS$Parameter == "z"] # depth
 #  prey abundance data for length of model run
   prey_abundance = read.csv(paste0("data/abundanceData/abundance_", scenario, ".csv"))
   prey_abundance = prey_abundance[prey_abundance$jd >= JD_ADDED & prey_abundance$jd <= JD_FINISH,]
-  #prey_abundance_year <- subset(prey_abundance, year == runYear)
-  #prey_abundance <- prey_abundance_year
   years <- prey_abundance$year
+  prey_abundanceConst <- prey_abundance[,4:ncol(prey_abundance)]
+  prey_abundanceConst <- matrix(colMeans(prey_abundanceConst, na.rm = TRUE))
+  ones <- matrix(rep(1, nrow(prey_abundance)), ncol = 1)
+  prey_abundanceConst <- t(tcrossprod(prey_abundanceConst, ones))
+  prey_abundanceConst <- mutate(data.frame(prey_abundanceConst), obs = prey_abundance[,1], year = years, jd = prey_abundance$jd, .before = 1)
+  
 
   # input id (if several scenarios are run in sequence)
   input_id = rep(1:sum(prey_abundance$jd == JD_ADDED), each = length(JD_ADDED:JD_FINISH))
@@ -42,10 +46,11 @@ z = CONSTANTS$value[CONSTANTS$Parameter == "z"] # depth
   temp = read.csv(paste0("data/tempData/temp_", scenario, ".csv"), sep = ",")
   temp = temp$temp[yday(temp$date) >= JD_ADDED & yday(temp$date)<= JD_FINISH]
   # constant temp
-  tempConst <- rep(1, length(temp)) 
+  tempConst <- rep(mean(temp, na.rm = TRUE), length(temp)) 
     
   # day lengths
   DayLengths = rep( round(daylength(latitude, JD_ADDED:JD_FINISH)), max(input_id))
+  DayLengthsConst <- floor(rep(mean(DayLengths), length(DayLengths)))
   
   # julian day vector
   JulianDayV = rep(JD_ADDED:JD_FINISH, max(input_id) )
@@ -53,6 +58,7 @@ z = CONSTANTS$value[CONSTANTS$Parameter == "z"] # depth
   # light
   light = read.csv(paste0("data/light/light_", scenario, ".csv"), sep = ",")
   light = light$light[yday(light$date) >= JD_ADDED & yday(light$date)<= JD_FINISH]
+  lightConst <- rep(mean(light, na.rm = TRUE), length(light))
   
   ac = 0.1 # diffuse attenuation coefficient
   ambient_mult = exp(-ac*z)
