@@ -1,6 +1,6 @@
 # Construct and solve van bertalanffy growth equation with ingestion term
 
-CalculateAssimilation <- function(iyear, NoDays, MaxWEIGHT, assimilationV) {
+CalculateAssimilation <- function(iyear, NoDays, MaxWEIGHT, MaxLENGTH, assimilationV) {
 
     i_dailys <- numeric(NoDays)
     A_dailys <- numeric(NoDays)
@@ -20,8 +20,8 @@ CalculateAssimilation <- function(iyear, NoDays, MaxWEIGHT, assimilationV) {
             feeding_time_fraction <- 0
         }
 
-        #h_feed <- floor(h_feed_max * feeding_time_fraction) # hours spent feeding
-       h_feed <- h_feed_max # hours spent feeding
+        h_feed <- floor(h_feed_max * feeding_time_fraction) # hours spent feeding
+       #h_feed <- h_feed_max # hours spent feeding
 
         #initialise numerator of functional response for each prey class (mode) to be summed
         func_response_numerator <- numeric(NoModes)
@@ -96,11 +96,12 @@ CalculateAssimilation <- function(iyear, NoDays, MaxWEIGHT, assimilationV) {
         #WEIGHT <- k * A_dailys[iday] * (MaxWEIGHT - WEIGHT) + WEIGHT
         WEIGHT <- k * A_dailys[iday] + WEIGHT
         LENGTHcoeff <- LENGTH^(1-a2)/(a1*a2)
+        #LENGTH <- k * LENGTHcoeff * A_dailys[iday] * (MaxLENGTH - a1*LENGTH^a2) + LENGTH
         LENGTH <- k * LENGTHcoeff * A_dailys[iday] + LENGTH
         
         
     }
-    results_DF <- data.frame(assimilated_weight = A_dailys, ingested_weight = i_dailys, weight = WEIGHT_daily, length = LENGTH_daily, jd = JulianDayV[1:72], feeding_hours = h_feeds)
+    results_DF <- data.frame(assimilated_weight = A_dailys, ingested_weight = i_dailys, weight = WEIGHT_daily, length = LENGTH_daily, jd = JulianDayV[1:length(WEIGHT_daily)], feeding_hours = h_feeds)
     
     return(results_DF)
 }

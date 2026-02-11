@@ -1,6 +1,4 @@
 #~~~~~~~~~~~ LOAD ENVIRONMENTAL DATA ~~~~~~~~~~#
-# julian day of end of model run
-JD_FINISH = 212
 
 #~~~~~~~~ PREY CHARACTERISTICS ~~~~~~~~#
 prey_info = read.csv("data/prey_info.csv")

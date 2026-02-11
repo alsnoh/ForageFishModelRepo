@@ -11,7 +11,11 @@ rm(list = ls())
 #plot.new()
 
 # Initial Conditions
-JD_ADDED <- 141 
+JD_ADDED <- 1 #141 Julian day when the model starts
+# julian day of end of model run
+JD_FINISH <- 365 #212
+
+# initial weight and length
 W0 <- 0.14
 #linear regression parameters for length-weight relationship
 a1 <- exp(-6.8488)
@@ -61,6 +65,7 @@ source("Model/CalculateAssimilation.R")
 
 #source("Model/CalculateMaxWeight.R")
 MaxWEIGHT <- 5
+MaxLENGTH <- (MaxWEIGHT/a1)^(1/a2) # theoretical maximum length based on maximum weight
 
 
 
@@ -78,7 +83,7 @@ source("Model/getr.R")
 WEIGHT <- W0
 LENGTH <- L0
 # Main model loop, calculating model results for each year
-for (iyear in 1:length(ModelRunLengths)) {
+for (iyear in 1:1) {  #  1:length(ModelRunLengths)
 
 
     NoDays <- ModelRunLengths[iyear]
@@ -87,9 +92,9 @@ for (iyear in 1:length(ModelRunLengths)) {
     # Calculate max weight
     #MaxWEIGHT <- CalculateMaxWeight(iyear, NoDays, assimilationV, WEIGHT)
 
-    results_DF <- CalculateAssimilation(iyear, NoDays, MaxWEIGHT, assimilationV)
+    results_DF <- CalculateAssimilation(iyear, NoDays, MaxWEIGHT, MaxLENGTH, assimilationV)
 
-    # Reset initial conditions every year
+    # Reset initial conditions every year or leave the same if you want to see the effect of growth over several years
     WEIGHT <- W0
     LENGTH <- L0
     results_daily_year <- data.frame(year = current_year, assimilated_weight = results_DF$assimilated_weight, ingested_weight = results_DF$ingested_weight, Weight = results_DF$weight, Length = results_DF$length, JulianDay = results_DF$jd, feeding_hours = results_DF$feeding_hours)
