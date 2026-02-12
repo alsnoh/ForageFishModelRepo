@@ -1,6 +1,20 @@
 # Construct and solve van bertalanffy growth equation with ingestion term
-
-CalculateAssimilation <- function(iyear, NoDays, MaxWEIGHT, MaxLENGTH, assimilationV) {
+source("Model/getr.R")
+CalculateAssimilation <- function(  iyear, 
+                                    NoDays, 
+                                    MaxWEIGHT, 
+                                    MaxLENGTH, 
+                                    assimilationV,
+                                    prey_abundance, 
+                                    prey_size, 
+                                    prey_energy, 
+                                    prey_ed, 
+                                    prey_mode, 
+                                    prey_image_area, 
+                                    JulianDayV, 
+                                    DayLengths, 
+                                    light, 
+                                    a_c) {
 
     i_dailys <- numeric(NoDays)
     A_dailys <- numeric(NoDays)
@@ -12,7 +26,7 @@ CalculateAssimilation <- function(iyear, NoDays, MaxWEIGHT, MaxLENGTH, assimilat
 
         JulianDay <- JulianDayV[iday]
         #h_feed_max <- DayLengths[iday + NoDays * (iyear - 1)]
-        h_feed_max <- DayLengthsConst[iday + NoDays * (iyear - 1)] # for controlled experiments
+        h_feed_max <- DayLengths[iday + NoDays * (iyear - 1)] # for controlled experiments
         assimilation <- assimilationV[iday + NoDays * (iyear - 1)]
 
         feeding_time_fraction <- (MaxWEIGHT-WEIGHT)/MaxWEIGHT # fraction of max weight determines time spent feeding
@@ -20,8 +34,8 @@ CalculateAssimilation <- function(iyear, NoDays, MaxWEIGHT, MaxLENGTH, assimilat
             feeding_time_fraction <- 0
         }
 
-        h_feed <- floor(h_feed_max * feeding_time_fraction) # hours spent feeding
-       #h_feed <- h_feed_max # hours spent feeding
+       # h_feed <- floor(h_feed_max * feeding_time_fraction) # hours spent feeding
+       h_feed <- h_feed_max # hours spent feeding
 
         #initialise numerator of functional response for each prey class (mode) to be summed
         func_response_numerator <- numeric(NoModes)
@@ -30,6 +44,7 @@ CalculateAssimilation <- function(iyear, NoDays, MaxWEIGHT, MaxLENGTH, assimilat
 
         for (itaxa in 1:NoTaxa){
 
+            ac = a_c[iday]
             E <- (   ( (LENGTH / 100 )*dec_dist_scale)^2 )/(  C *  (  (  10^(2.62 *log10( 7 ) -2.01)   )/1000000   )   ) # eye sensitivity 
             ab <- (ac - 0.04)/0.2; # beam attenuation
             
@@ -37,14 +52,14 @@ CalculateAssimilation <- function(iyear, NoDays, MaxWEIGHT, MaxLENGTH, assimilat
             detection_distance <- getr(ab, 
                                     (prey_image_area[itaxa]/1000000),
                                     E,
-                                    lightConst[iday + NoDays * (iyear - 1)], # lightConst for controlled experiments, light for actual data
-                                        kR,
-                                        0.001)
+                                    light[iday + NoDays * (iyear - 1)], # lightConst for controlled experiments, light for actual data
+                                    kR,
+                                    0.001)
 
             search_rate <- pi*(detection_distance^2)*swimming_speed*60*60 * ( (LENGTH )/100 ) 
 
             efficiency <- 1*(1-(1/(1+exp(-b* (log(prey_size[itaxa] /10.0 ) -  m  )  )))) # ok but decline in DB not so clear
-            abundance <- prey_abundanceConst[iday + NoDays * (iyear - 1), itaxa + 3]; # abundance of prey type on given day use  prey_abundanceConst for controlled experiments
+            abundance <- prey_abundance[iday + NoDays * (iyear - 1), itaxa + 3]; # abundance of prey type on given day use  prey_abundanceConst for controlled experiments
             capture_rate <- efficiency * search_rate * abundance # capture rate ignoring handling time
 
 
@@ -93,11 +108,16 @@ CalculateAssimilation <- function(iyear, NoDays, MaxWEIGHT, MaxLENGTH, assimilat
 
         WEIGHT_daily[iday] <- WEIGHT
         LENGTH_daily[iday] <- LENGTH
-        #WEIGHT <- k * A_dailys[iday] * (MaxWEIGHT - WEIGHT) + WEIGHT
-        WEIGHT <- k * A_dailys[iday] + WEIGHT
+
         LENGTHcoeff <- LENGTH^(1-a2)/(a1*a2)
-        #LENGTH <- k * LENGTHcoeff * A_dailys[iday] * (MaxLENGTH - a1*LENGTH^a2) + LENGTH
-        LENGTH <- k * LENGTHcoeff * A_dailys[iday] + LENGTH
+
+        # growth based on von bertalanffy with ingestion term and asymptote at max weight - can be switched on/off by commenting out the relevant lines
+        #  WEIGHT <- k * A_dailys[iday] * (MaxWEIGHT - WEIGHT) + WEIGHT
+        #  LENGTH <- k * LENGTHcoeff * A_dailys[iday] * (MaxWEIGHT - a1*LENGTH^a2) + LENGTH
+
+        # growth based on von bertalanffy with ingestion term but no asymptote at max weight - can be switched on/off by commenting out the relevant lines
+         WEIGHT <- k * A_dailys[iday] + WEIGHT
+          LENGTH <- k * LENGTHcoeff * A_dailys[iday] + LENGTH
         
         
     }

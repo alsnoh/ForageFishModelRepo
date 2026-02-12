@@ -8,24 +8,23 @@
 
 # clear environment
 rm(list = ls())
-#plot.new()
 
-# Initial Conditions
-JD_ADDED <- 1 #141 Julian day when the model starts
-# julian day of end of model run
-JD_FINISH <- 365 #212
+
+#Julian days at start and end of model
+JD_ADDED <- 141 #141 
+JD_FINISH <- 212 #212
 
 # initial weight and length
-W0 <- 0.14
 #linear regression parameters for length-weight relationship
 a1 <- exp(-6.8488)
 a2 <- 3.4943
+W0 <- 0.14 # initial weight in g
 L0 <- (W0/a1)^(1/a2) # initial length in cm 
 
 # parameters
-#assimilation <- 0.4
-k <- 0.2
-#MaxLength <- 12
+MaxWEIGHT <- 5 # master trait 
+k <- 0.3#/MaxWEIGHT # growth rate
+
 
 DF <- data.frame()
 
@@ -43,6 +42,8 @@ suppressMessages(library(scales))
 suppressMessages(library(nlme))
 suppressMessages(library(MuMIn))
 suppressMessages(library(jsonlite))
+
+
 
 # load location data
 locations <- read.delim("data/locations.csv")
@@ -64,21 +65,14 @@ source("Model/EnvironmentalConditions.R")
 source("Model/CalculateAssimilation.R")
 
 #source("Model/CalculateMaxWeight.R")
-MaxWEIGHT <- 5
-MaxLENGTH <- (MaxWEIGHT/a1)^(1/a2) # theoretical maximum length based on maximum weight
 
 
-
-# function used in model loop
 
 #temperature-dependent assimilation
-
 assimilationV <- c()
 for(iday in 1:length(input_id)) {
     assimilationV[iday] = (A1 + A2*tempConst[iday])-Ua   # tempConst for controlled experiments, temp for data
 }
-
-source("Model/getr.R")
 
 WEIGHT <- W0
 LENGTH <- L0
@@ -92,7 +86,21 @@ for (iyear in 1:1) {  #  1:length(ModelRunLengths)
     # Calculate max weight
     #MaxWEIGHT <- CalculateMaxWeight(iyear, NoDays, assimilationV, WEIGHT)
 
-    results_DF <- CalculateAssimilation(iyear, NoDays, MaxWEIGHT, MaxLENGTH, assimilationV)
+    results_DF <- CalculateAssimilation(iyear, 
+                                        NoDays, 
+                                        MaxWEIGHT, 
+                                        MaxLENGTH, 
+                                        assimilationV,
+                                        prey_abundanceConst, 
+                                        prey_size, 
+                                        prey_energy, 
+                                        prey_ed, 
+                                        prey_mode, 
+                                        prey_image_area, 
+                                        JulianDayV, 
+                                        DayLengthsConst, 
+                                        lightConst, 
+                                        a_c)
 
     # Reset initial conditions every year or leave the same if you want to see the effect of growth over several years
     WEIGHT <- W0
