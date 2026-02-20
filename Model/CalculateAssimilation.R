@@ -14,7 +14,8 @@ CalculateAssimilation <- function(  iyear,
                                     JulianDayV, 
                                     DayLengths, 
                                     light, 
-                                    a_c) {
+                                    a_c,
+                                    mu) {
 
     i_dailys <- numeric(NoDays)
     A_dailys <- numeric(NoDays)
@@ -34,8 +35,8 @@ CalculateAssimilation <- function(  iyear,
             feeding_time_fraction <- 0
         }
 
-       # h_feed <- floor(h_feed_max * feeding_time_fraction) # hours spent feeding
-       h_feed <- h_feed_max # hours spent feeding
+        h_feed <- floor(h_feed_max * feeding_time_fraction) # hours spent feeding
+       #h_feed <- h_feed_max # hours spent feeding
 
         #initialise numerator of functional response for each prey class (mode) to be summed
         func_response_numerator <- numeric(NoModes)
@@ -116,8 +117,12 @@ CalculateAssimilation <- function(  iyear,
         #  LENGTH <- k * LENGTHcoeff * A_dailys[iday] * (MaxWEIGHT - a1*LENGTH^a2) + LENGTH
 
         # growth based on von bertalanffy with ingestion term but no asymptote at max weight - can be switched on/off by commenting out the relevant lines
-         WEIGHT <- k * A_dailys[iday] + WEIGHT
-          LENGTH <- k * LENGTHcoeff * A_dailys[iday] + LENGTH
+        #  WEIGHT <- k * A_dailys[iday] + WEIGHT
+        #   LENGTH <- k * LENGTHcoeff * A_dailys[iday] + LENGTH
+
+        # Model V3
+        WEIGHT <- A_dailys[iday] - mu * WEIGHT + WEIGHT
+        LENGTH <- (1/3) * (A_dailys[iday] * (1/(a1*LENGTH^2)) - mu * LENGTH) + LENGTH 
         
         
     }

@@ -22,8 +22,9 @@ W0 <- 0.14 # initial weight in g
 L0 <- (W0/a1)^(1/a2) # initial length in cm 
 
 # parameters
-MaxWEIGHT <- 5 # master trait 
-k <- 0.3#/MaxWEIGHT # growth rate
+MaxWEIGHT <- 3 # master trait 
+k <- 0.3/MaxWEIGHT # growth rate
+mu <- 0.22 
 
 
 DF <- data.frame()
@@ -77,7 +78,7 @@ for(iday in 1:length(input_id)) {
 WEIGHT <- W0
 LENGTH <- L0
 # Main model loop, calculating model results for each year
-for (iyear in 1:1) {  #  1:length(ModelRunLengths)
+for (iyear in 1:length(ModelRunLengths)) {  #  1:length(ModelRunLengths)
 
 
     NoDays <- ModelRunLengths[iyear]
@@ -91,16 +92,17 @@ for (iyear in 1:1) {  #  1:length(ModelRunLengths)
                                         MaxWEIGHT, 
                                         MaxLENGTH, 
                                         assimilationV,
-                                        prey_abundanceConst, 
+                                        prey_abundance, #prey_abundanceConst for controlled experiments, prey_abundance for actual data
                                         prey_size, 
                                         prey_energy, 
                                         prey_ed, 
                                         prey_mode, 
                                         prey_image_area, 
                                         JulianDayV, 
-                                        DayLengthsConst, 
-                                        lightConst, 
-                                        a_c)
+                                        DayLengths, #DayLengthsConst for controlled experiments, DayLengths for actual data
+                                        light, #lightConst
+                                        a_c,
+                                        mu)
 
     # Reset initial conditions every year or leave the same if you want to see the effect of growth over several years
     WEIGHT <- W0
