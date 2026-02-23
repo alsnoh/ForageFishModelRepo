@@ -15,7 +15,8 @@ CalculateAssimilation <- function(  iyear,
                                     DayLengths, 
                                     light, 
                                     a_c,
-                                    mu) {
+                                    mu,
+                                    lambda) {
 
     i_dailys <- numeric(NoDays)
     A_dailys <- numeric(NoDays)
@@ -30,13 +31,13 @@ CalculateAssimilation <- function(  iyear,
         h_feed_max <- DayLengths[iday + NoDays * (iyear - 1)] # for controlled experiments
         assimilation <- assimilationV[iday + NoDays * (iyear - 1)]
 
-        feeding_time_fraction <- (MaxWEIGHT-WEIGHT)/MaxWEIGHT # fraction of max weight determines time spent feeding
+        feeding_time_fraction <- (MaxLENGTH-LENGTH)/MaxLENGTH # fraction of max length determines time spent feeding
         if(feeding_time_fraction < 0) {
             feeding_time_fraction <- 0
         }
 
         h_feed <- floor(h_feed_max * feeding_time_fraction) # hours spent feeding
-       #h_feed <- h_feed_max # hours spent feeding
+       # h_feed <- h_feed_max # hours spent feeding
 
         #initialise numerator of functional response for each prey class (mode) to be summed
         func_response_numerator <- numeric(NoModes)
@@ -112,19 +113,25 @@ CalculateAssimilation <- function(  iyear,
 
         LENGTHcoeff <- LENGTH^(1-a2)/(a1*a2)
 
-        # growth based on von bertalanffy with ingestion term and asymptote at max weight - can be switched on/off by commenting out the relevant lines
+        # V1 growth based on von bertalanffy with ingestion term and asymptote at max weight - can be switched on/off by commenting out the relevant lines
         #  WEIGHT <- k * A_dailys[iday] * (MaxWEIGHT - WEIGHT) + WEIGHT
         #  LENGTH <- k * LENGTHcoeff * A_dailys[iday] * (MaxWEIGHT - a1*LENGTH^a2) + LENGTH
 
-        # growth based on von bertalanffy with ingestion term but no asymptote at max weight - can be switched on/off by commenting out the relevant lines
-        #  WEIGHT <- k * A_dailys[iday] + WEIGHT
-        #   LENGTH <- k * LENGTHcoeff * A_dailys[iday] + LENGTH
+        # V2 growth based on von bertalanffy with ingestion term but no asymptote at max weight - can be switched on/off by commenting out the relevant lines
+         WEIGHT <- k * A_dailys[iday] + WEIGHT
+         LENGTH <- k * LENGTHcoeff * A_dailys[iday] + LENGTH
 
         # Model V3
-        WEIGHT <- A_dailys[iday] - mu * WEIGHT + WEIGHT
-        LENGTH <- (1/3) * (A_dailys[iday] * (1/(a1*LENGTH^2)) - mu * LENGTH) + LENGTH 
-        
-        
+        #WEIGHT <- A_dailys[iday] - mu * WEIGHT + WEIGHT
+        #LENGTH <- (1/a2) * (A_dailys[iday] * (1/(a1*LENGTH^(a2-1))) - mu * LENGTH) + LENGTH 
+
+        # Model V4 Doesnt work at all lol
+        # WEIGHT <- A_dailys[iday] - mu * WEIGHT + WEIGHT
+        # LENGTH <- k * (A_dailys[iday] * LENGTH^(1-a2) * MaxLENGTH - LENGTH) + LENGTH
+
+        # Model V5 
+        #WEIGHT <- lambda * A_dailys[iday] * WEIGHT^(2/3) - mu * WEIGHT + WEIGHT
+        #LENGTH <- k * (A_dailys[iday] * MaxLENGTH - LENGTH) + LENGTH
     }
     results_DF <- data.frame(assimilated_weight = A_dailys, ingested_weight = i_dailys, weight = WEIGHT_daily, length = LENGTH_daily, jd = JulianDayV[1:length(WEIGHT_daily)], feeding_hours = h_feeds)
     

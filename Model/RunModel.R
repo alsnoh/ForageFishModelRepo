@@ -18,13 +18,15 @@ JD_FINISH <- 212 #212
 #linear regression parameters for length-weight relationship
 a1 <- exp(-6.8488)
 a2 <- 3.4943
-W0 <- 0.14 # initial weight in g
+W0 <- 0.5 # initial weight in g
 L0 <- (W0/a1)^(1/a2) # initial length in cm 
 
 # parameters
 MaxWEIGHT <- 3 # master trait 
-k <- 0.3/MaxWEIGHT # growth rate
-mu <- 0.22 
+MaxLENGTH <- 50 # master trait
+k <- 0.3#/MaxWEIGHT # growth rate
+mu <- 0.1
+lambda <- 0.5 
 
 
 DF <- data.frame()
@@ -50,7 +52,7 @@ suppressMessages(library(jsonlite))
 locations <- read.delim("data/locations.csv")
 
 # pick location "FoF", "DB", "Shetland", "ECG"
-scenario <- "FoF"
+scenario <- "ECG"
 
 # load constants
 CONSTANTS <- read.csv("Model/CONSTANTS.csv")
@@ -102,7 +104,8 @@ for (iyear in 1:length(ModelRunLengths)) {  #  1:length(ModelRunLengths)
                                         DayLengths, #DayLengthsConst for controlled experiments, DayLengths for actual data
                                         light, #lightConst
                                         a_c,
-                                        mu)
+                                        mu,
+                                        lambda)
 
     # Reset initial conditions every year or leave the same if you want to see the effect of growth over several years
     WEIGHT <- W0

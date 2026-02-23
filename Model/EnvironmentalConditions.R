@@ -25,6 +25,19 @@ z = CONSTANTS$value[CONSTANTS$Parameter == "z"] # depth
   prey_abundance = read.csv(paste0("data/abundanceData/abundance_", scenario, ".csv"))
   prey_abundance = prey_abundance[prey_abundance$jd >= JD_ADDED & prey_abundance$jd <= JD_FINISH,]
   years <- prey_abundance$year
+  prey_abundanceAVG <- data.frame()
+
+
+  count <- 1
+  for (iiyear in unique(years)) {
+     prey_abundanceAVG <- rbind(prey_abundanceAVG, colMeans(prey_abundance[prey_abundance$year == iiyear,4:ncol(prey_abundance)], na.rm = TRUE)) # FOR COMparing different years
+     count <- count + 1
+  }
+  prey_abundanceAVG <- cbind(prey_abundanceAVG, unique(years))
+  colnames(prey_abundanceAVG)[1:ncol(prey_abundanceAVG)-1] <- colnames(prey_abundance)[4:ncol(prey_abundance)]
+  
+ 
+  
   prey_abundanceConst <- prey_abundance[,4:ncol(prey_abundance)]
   prey_abundanceConst <- matrix(colMeans(prey_abundanceConst, na.rm = TRUE))
   ones <- matrix(rep(1, nrow(prey_abundance)), ncol = 1)
@@ -41,8 +54,10 @@ z = CONSTANTS$value[CONSTANTS$Parameter == "z"] # depth
   longitude = locations$centre_long[locations$loc == scenario]
   
   # temperature 
-  temp = read.csv(paste0("data/tempData/temp_", scenario, ".csv"), sep = ",")
-  temp = temp$temp[yday(temp$date) >= JD_ADDED & yday(temp$date)<= JD_FINISH]
+  tempCSV = read.csv(paste0("data/tempData/temp_", scenario, ".csv"), sep = ",")
+  temp = tempCSV$temp[yday(tempCSV$date) >= JD_ADDED & yday(tempCSV$date)<= JD_FINISH]
+  tempAvg <- data.frame(temp = temp, year = year(tempCSV$date[yday(tempCSV$date) >= JD_ADDED & yday(tempCSV$date)<= JD_FINISH]))
+  tempAvg <- aggregate(temp ~ year, data = tempAvg, FUN = mean)
   # constant temp
   tempConst <- rep(mean(temp, na.rm = TRUE), length(temp)) 
     
@@ -54,8 +69,10 @@ z = CONSTANTS$value[CONSTANTS$Parameter == "z"] # depth
   JulianDayV = rep(JD_ADDED:JD_FINISH, max(input_id) )
   
   # light
-  light = read.csv(paste0("data/light/light_", scenario, ".csv"), sep = ",")
-  light = light$light[yday(light$date) >= JD_ADDED & yday(light$date)<= JD_FINISH]
+  lightCSV = read.csv(paste0("data/light/light_", scenario, ".csv"), sep = ",")
+  light = lightCSV$light[yday(lightCSV$date) >= JD_ADDED & yday(lightCSV$date)<= JD_FINISH]
+  lightAvg <- data.frame(light = light, year = year(lightCSV$date[yday(lightCSV$date) >= JD_ADDED & yday(lightCSV$date)<= JD_FINISH]))
+  lightAvg <- aggregate(light ~ year, data = lightAvg, FUN = mean)
   lightConst <- rep(mean(light, na.rm = TRUE), length(light))
   
   ac = 0.1 # diffuse attenuation coefficient
