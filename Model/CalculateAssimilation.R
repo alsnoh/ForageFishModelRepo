@@ -37,7 +37,7 @@ CalculateAssimilation <- function(  iyear,
         }
 
         h_feed <- floor(h_feed_max * feeding_time_fraction) # hours spent feeding
-       # h_feed <- h_feed_max # hours spent feeding
+        #h_feed <- h_feed_max # hours spent feeding
 
         #initialise numerator of functional response for each prey class (mode) to be summed
         func_response_numerator <- numeric(NoModes)

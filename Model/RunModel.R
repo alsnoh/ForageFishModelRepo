@@ -18,13 +18,13 @@ JD_FINISH <- 212 #212
 #linear regression parameters for length-weight relationship
 a1 <- exp(-6.8488)
 a2 <- 3.4943
-W0 <- 0.5 # initial weight in g
+W0 <- 0.14 # initial weight in g
 L0 <- (W0/a1)^(1/a2) # initial length in cm 
 
 # parameters
 MaxWEIGHT <- 3 # master trait 
-MaxLENGTH <- 50 # master trait
-k <- 0.3#/MaxWEIGHT # growth rate
+MaxLENGTH <- 18 # master trait
+k <- 0.2#/MaxWEIGHT # growth rate  0.025
 mu <- 0.1
 lambda <- 0.5 
 
@@ -52,7 +52,7 @@ suppressMessages(library(jsonlite))
 locations <- read.delim("data/locations.csv")
 
 # pick location "FoF", "DB", "Shetland", "ECG"
-scenario <- "ECG"
+scenario <- "FoF"
 
 # load constants
 CONSTANTS <- read.csv("Model/CONSTANTS.csv")
