@@ -23,12 +23,13 @@ CalculateAssimilation <- function(  iyear,
     WEIGHT_daily <- numeric(NoDays)
     LENGTH_daily <- numeric(NoDays)
     h_feeds <- numeric(NoDays)
+    search_rates <- numeric(NoDays)
 
     for (iday in 1:NoDays){
 
         JulianDay <- JulianDayV[iday]
-        #h_feed_max <- DayLengths[iday + NoDays * (iyear - 1)]
-        h_feed_max <- DayLengths[iday + NoDays * (iyear - 1)] # for controlled experiments
+
+        h_feed_max <- DayLengths[iday + NoDays * (iyear - 1)] 
         assimilation <- assimilationV[iday + NoDays * (iyear - 1)]
 
         feeding_time_fraction <- (MaxLENGTH-LENGTH)/MaxLENGTH # fraction of max length determines time spent feeding
@@ -106,6 +107,8 @@ CalculateAssimilation <- function(  iyear,
         i_dailys[iday] <- i_daily
         A_dailys[iday] <- A_daily
 
+        search_rates[iday] <- search_rate
+
         h_feeds[iday] <- h_feed
 
         WEIGHT_daily[iday] <- WEIGHT
@@ -114,12 +117,12 @@ CalculateAssimilation <- function(  iyear,
         LENGTHcoeff <- LENGTH^(1-a2)/(a1*a2)
 
         # V1 growth based on von bertalanffy with ingestion term and asymptote at max weight - can be switched on/off by commenting out the relevant lines
-        #  WEIGHT <- k * A_dailys[iday] * (MaxWEIGHT - WEIGHT) + WEIGHT
-        #  LENGTH <- k * LENGTHcoeff * A_dailys[iday] * (MaxWEIGHT - a1*LENGTH^a2) + LENGTH
+          WEIGHT <- k * A_dailys[iday] * (MaxWEIGHT - WEIGHT) + WEIGHT
+          LENGTH <- k * LENGTHcoeff * A_dailys[iday] * (MaxWEIGHT - a1*LENGTH^a2) + LENGTH
 
         # V2 growth based on von bertalanffy with ingestion term but no asymptote at max weight - can be switched on/off by commenting out the relevant lines
-         WEIGHT <- k * A_dailys[iday] + WEIGHT
-         LENGTH <- k * LENGTHcoeff * A_dailys[iday] + LENGTH
+        # WEIGHT <- k * A_dailys[iday] + WEIGHT
+        # LENGTH <- k * LENGTHcoeff * A_dailys[iday] + LENGTH
 
         # Model V3
         #WEIGHT <- A_dailys[iday] - mu * WEIGHT + WEIGHT
@@ -133,7 +136,7 @@ CalculateAssimilation <- function(  iyear,
         #WEIGHT <- lambda * A_dailys[iday] * WEIGHT^(2/3) - mu * WEIGHT + WEIGHT
         #LENGTH <- k * (A_dailys[iday] * MaxLENGTH - LENGTH) + LENGTH
     }
-    results_DF <- data.frame(assimilated_weight = A_dailys, ingested_weight = i_dailys, weight = WEIGHT_daily, length = LENGTH_daily, jd = JulianDayV[1:length(WEIGHT_daily)], feeding_hours = h_feeds)
+    results_DF <- data.frame(assimilated_weight = A_dailys, ingested_weight = i_dailys, weight = WEIGHT_daily, length = LENGTH_daily, jd = JulianDayV[1:length(WEIGHT_daily)], feeding_hours = h_feeds, search_rate = search_rates)
     
     return(results_DF)
 }

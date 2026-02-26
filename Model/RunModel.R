@@ -22,9 +22,9 @@ W0 <- 0.14 # initial weight in g
 L0 <- (W0/a1)^(1/a2) # initial length in cm 
 
 # parameters
-MaxWEIGHT <- 3 # master trait 
+MaxWEIGHT <- 5 # master trait 
 MaxLENGTH <- 18 # master trait
-k <- 0.2#/MaxWEIGHT # growth rate  0.025
+k <- 0.3/MaxWEIGHT # growth rate  0.025
 mu <- 0.1
 lambda <- 0.5 
 
@@ -52,7 +52,7 @@ suppressMessages(library(jsonlite))
 locations <- read.delim("data/locations.csv")
 
 # pick location "FoF", "DB", "Shetland", "ECG"
-scenario <- "FoF"
+scenario <- "Shetland"
 
 # load constants
 CONSTANTS <- read.csv("Model/CONSTANTS.csv")
@@ -80,7 +80,7 @@ for(iday in 1:length(input_id)) {
 WEIGHT <- W0
 LENGTH <- L0
 # Main model loop, calculating model results for each year
-for (iyear in 1:length(ModelRunLengths)) {  #  1:length(ModelRunLengths)
+for (iyear in 1:1) {  #  1:length(ModelRunLengths)
 
 
     NoDays <- ModelRunLengths[iyear]
@@ -94,15 +94,15 @@ for (iyear in 1:length(ModelRunLengths)) {  #  1:length(ModelRunLengths)
                                         MaxWEIGHT, 
                                         MaxLENGTH, 
                                         assimilationV,
-                                        prey_abundance, #prey_abundanceConst for controlled experiments, prey_abundance for actual data
+                                        prey_abundanceConst, #prey_abundanceConst for controlled experiments, prey_abundance for actual data
                                         prey_size, 
                                         prey_energy, 
                                         prey_ed, 
                                         prey_mode, 
                                         prey_image_area, 
                                         JulianDayV, 
-                                        DayLengths, #DayLengthsConst for controlled experiments, DayLengths for actual data
-                                        light, #lightConst
+                                        DayLengthsConst, #DayLengthsConst for controlled experiments, DayLengths for actual data
+                                        lightConst, #lightConst
                                         a_c,
                                         mu,
                                         lambda)
