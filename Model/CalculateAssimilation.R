@@ -24,6 +24,8 @@ CalculateAssimilation <- function(  iyear,
     LENGTH_daily <- numeric(NoDays)
     h_feeds <- numeric(NoDays)
     search_rates <- numeric(NoDays)
+    particulates <- numeric(NoDays)
+    filters <- numeric(NoDays)
 
     for (iday in 1:NoDays){
 
@@ -43,6 +45,8 @@ CalculateAssimilation <- function(  iyear,
         #initialise numerator of functional response for each prey class (mode) to be summed
         func_response_numerator <- numeric(NoModes)
         denominator <- numeric(NoModes)
+
+        filter <- 0
 
 
         for (itaxa in 1:NoTaxa){
@@ -64,6 +68,7 @@ CalculateAssimilation <- function(  iyear,
             efficiency <- 1*(1-(1/(1+exp(-b* (log(prey_size[itaxa] /10.0 ) -  m  )  )))) # ok but decline in DB not so clear
             abundance <- prey_abundance[iday + NoDays * (iyear - 1), itaxa + 3]; # abundance of prey type on given day use  prey_abundanceConst for controlled experiments
             capture_rate <- efficiency * search_rate * abundance # capture rate ignoring handling time
+            filter_efficiency <- efficiency * 0.8
 
 
 
@@ -73,7 +78,13 @@ CalculateAssimilation <- function(  iyear,
                 denominator[imode] <- denominator[imode] + capture_rate * handling_time * (prey_mode[itaxa]==imode)
             }
 
+            filter <- filter + filter_efficiency * prey_energy[itaxa]/prey_ed[itaxa] * abundance
+
         }
+
+        I_filter <- 0.8*swimming_speed * 60 * 60 * Ag * filter_fraction * filter  # hourly filter feeding intake 
+
+         # adding on to numerators/denominators for filter feeding mode
 
         intake_per_mode <- numeric(NoModes)
         total_max <- 0
@@ -98,11 +109,18 @@ CalculateAssimilation <- function(  iyear,
             # loop through all hours of feeding - update stomach content each hour
             for(h in 1:h_feed)  
             {
+                #i_daily <- i_daily + i_hourly
+                if (i_hourly > I_filter) {
                 i_daily <- i_daily + i_hourly
+                } else {
+                i_daily <- i_daily + I_filter
+                }
             }
 
             A_daily <- i_daily*assimilation #account for assimilation efficiency
         }
+        particulates[iday] <- i_hourly * h_feed
+        filters[iday] <- I_filter * h_feed
 
         i_dailys[iday] <- i_daily
         A_dailys[iday] <- A_daily
@@ -117,12 +135,12 @@ CalculateAssimilation <- function(  iyear,
         LENGTHcoeff <- LENGTH^(1-a2)/(a1*a2)
 
         # V1 growth based on von bertalanffy with ingestion term and asymptote at max weight - can be switched on/off by commenting out the relevant lines
-          WEIGHT <- k * A_dailys[iday] * (MaxWEIGHT - WEIGHT) + WEIGHT
-          LENGTH <- k * LENGTHcoeff * A_dailys[iday] * (MaxWEIGHT - a1*LENGTH^a2) + LENGTH
+        #  WEIGHT <- k * A_dailys[iday] * (MaxWEIGHT - WEIGHT) + WEIGHT
+        #  LENGTH <- k * LENGTHcoeff * A_dailys[iday] * (MaxWEIGHT - a1*LENGTH^a2) + LENGTH
 
         # V2 growth based on von bertalanffy with ingestion term but no asymptote at max weight - can be switched on/off by commenting out the relevant lines
-        # WEIGHT <- k * A_dailys[iday] + WEIGHT
-        # LENGTH <- k * LENGTHcoeff * A_dailys[iday] + LENGTH
+         WEIGHT <- k * A_dailys[iday] + WEIGHT
+         LENGTH <- k * LENGTHcoeff * A_dailys[iday] + LENGTH
 
         # Model V3
         #WEIGHT <- A_dailys[iday] - mu * WEIGHT + WEIGHT
@@ -136,7 +154,7 @@ CalculateAssimilation <- function(  iyear,
         #WEIGHT <- lambda * A_dailys[iday] * WEIGHT^(2/3) - mu * WEIGHT + WEIGHT
         #LENGTH <- k * (A_dailys[iday] * MaxLENGTH - LENGTH) + LENGTH
     }
-    results_DF <- data.frame(assimilated_weight = A_dailys, ingested_weight = i_dailys, weight = WEIGHT_daily, length = LENGTH_daily, jd = JulianDayV[1:length(WEIGHT_daily)], feeding_hours = h_feeds, search_rate = search_rates)
+    results_DF <- data.frame(assimilated_weight = A_dailys, ingested_weight = i_dailys, weight = WEIGHT_daily, length = LENGTH_daily, jd = JulianDayV[1:length(WEIGHT_daily)], feeding_hours = h_feeds, search_rate = search_rates, particulates = particulates, filters = filters)
     
     return(results_DF)
 }

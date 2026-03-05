@@ -9,3 +9,5 @@ kR=3.5
 z=30
 b=5.095
 m=-1.9
+Ag=8e-06
+filter_fraction=0.85
