@@ -24,7 +24,7 @@ L0 <- (W0/a1)^(1/a2) # initial length in cm
 # parameters
 MaxWEIGHT <- 5 # master trait 
 MaxLENGTH <- 18 # master trait
-k <- 0.3#/MaxWEIGHT # growth rate  0.025
+k <- 1#/MaxWEIGHT # growth rate  0.025
 mu <- 0.1
 lambda <- 0.5 
 
@@ -71,12 +71,18 @@ source("Model/CalculateAssimilation.R")
 
 
 
-#temperature-dependent assimilation
-assimilationV <- c()
-for(iday in 1:length(input_id)) {
-    assimilationV[iday] = (A1 + A2*tempConst[iday])-Ua   # tempConst for controlled experiments, temp for data
-}
+# #temperature-dependent assimilation
+# assimilationV <- c()
+# for(iday in 1:length(input_id)) {
+#     assimilationV[iday] = (A1 + A2*temp[iday])-Ua   # tempConst for controlled experiments, temp for data
+# }
 
+# metabolismV <- c()
+# for(iday in 1:length(input_id)) {
+#     metabolismV[iday] =  M_FEED*pow(Q10_MF , temp[iday] / 10) 
+# }
+
+ENERGY <- W0 * ED
 WEIGHT <- W0
 LENGTH <- L0
 # Main model loop, calculating model results for each year
@@ -92,8 +98,9 @@ for (iyear in 1:length(ModelRunLengths)) {  #  1:length(ModelRunLengths)
     results_DF <- CalculateAssimilation(iyear, 
                                         NoDays, 
                                         MaxWEIGHT, 
-                                        MaxLENGTH, 
-                                        assimilationV,
+                                        MaxLENGTH,
+                                        temp, 
+                                        #assimilationV,
                                         prey_abundance, #prey_abundanceConst for controlled experiments, prey_abundance for actual data
                                         prey_size, 
                                         prey_energy, 

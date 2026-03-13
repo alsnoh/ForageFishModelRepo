@@ -3,8 +3,9 @@ source("Model/getr.R")
 CalculateAssimilation <- function(  iyear, 
                                     NoDays, 
                                     MaxWEIGHT, 
-                                    MaxLENGTH, 
-                                    assimilationV,
+                                    MaxLENGTH,
+                                    temp, 
+                                    #assimilationV,
                                     prey_abundance, 
                                     prey_size, 
                                     prey_energy, 
@@ -22,6 +23,7 @@ CalculateAssimilation <- function(  iyear,
     A_dailys <- numeric(NoDays)
     WEIGHT_daily <- numeric(NoDays)
     LENGTH_daily <- numeric(NoDays)
+    ENERGY_daily <- numeric(NoDays)
     h_feeds <- numeric(NoDays)
     search_rates <- numeric(NoDays)
     particulates <- numeric(NoDays)
@@ -32,7 +34,9 @@ CalculateAssimilation <- function(  iyear,
         JulianDay <- JulianDayV[iday]
 
         h_feed_max <- DayLengths[iday + NoDays * (iyear - 1)] 
-        assimilation <- assimilationV[iday + NoDays * (iyear - 1)]
+        #assimilation <- assimilationV[iday + NoDays * (iyear - 1)]
+        assimilation <- (A1 + A2*temp[iday + NoDays * (iyear - 1)])-Ua
+        metabolism <-  M_FEED*Q10_MF^(temp[iday + NoDays * (iyear - 1)] / 10)
 
         feeding_time_fraction <- (MaxLENGTH-LENGTH)/MaxLENGTH # fraction of max length determines time spent feeding
         if(feeding_time_fraction < 0) {
@@ -74,15 +78,17 @@ CalculateAssimilation <- function(  iyear,
 
             for(imode in 1:NoModes){ # adding on to respective numerators/denominators if type matches mode
 
-                func_response_numerator[imode] <- func_response_numerator[imode] + capture_rate * prey_energy[itaxa]/prey_ed[itaxa] * (prey_mode[itaxa]==imode)
+                func_response_numerator[imode] <- func_response_numerator[imode] + capture_rate * prey_energy[itaxa] * (prey_mode[itaxa]==imode) #/prey_ed[itaxa] for weight not energy
                 denominator[imode] <- denominator[imode] + capture_rate * handling_time * (prey_mode[itaxa]==imode)
             }
 
-            filter <- filter + filter_efficiency * prey_energy[itaxa]/prey_ed[itaxa] * abundance
+            filter <- filter + filter_efficiency * prey_energy[itaxa] * abundance #/prey_ed[itaxa] for weight not energy
 
         }
+        gape_max <- Ag_frac * MaxLENGTH
+        gape_size <- gape_max * LENGTH/(1+LENGTH) # gape size increases with length but asymptotes at gape_max
 
-        I_filter <- 0.8*swimming_speed * 60 * 60 * Ag * filter_fraction * filter  # hourly filter feeding intake 
+        I_filter <- 0.8 * filter_speed * 60 * 60 * gape_size * filter_fraction * filter  # hourly filter feeding intake 
 
          # adding on to numerators/denominators for filter feeding mode
 
@@ -117,8 +123,15 @@ CalculateAssimilation <- function(  iyear,
                 }
             }
 
+            i_daily <- i_daily / 1000 # convert to kJ
             A_daily <- i_daily*assimilation #account for assimilation efficiency
+            
         }
+
+
+        MET_SMR <- WEIGHT^rrr * metabolism # standard metabolic cost for 24h
+
+        
         particulates[iday] <- i_hourly * h_feed
         filters[iday] <- I_filter * h_feed
 
@@ -129,6 +142,7 @@ CalculateAssimilation <- function(  iyear,
 
         h_feeds[iday] <- h_feed
 
+        ENERGY_daily[iday] <- ENERGY
         WEIGHT_daily[iday] <- WEIGHT
         LENGTH_daily[iday] <- LENGTH
 
@@ -139,8 +153,8 @@ CalculateAssimilation <- function(  iyear,
         #  LENGTH <- k * LENGTHcoeff * A_dailys[iday] * (MaxWEIGHT - a1*LENGTH^a2) + LENGTH
 
         # V2 growth based on von bertalanffy with ingestion term but no asymptote at max weight - can be switched on/off by commenting out the relevant lines
-         WEIGHT <- k * A_dailys[iday] + WEIGHT
-         LENGTH <- k * LENGTHcoeff * A_dailys[iday] + LENGTH
+        # WEIGHT <- k * A_dailys[iday] + WEIGHT
+         #LENGTH <- k * LENGTHcoeff * A_dailys[iday] + LENGTH
 
         # Model V3
         #WEIGHT <- A_dailys[iday] - mu * WEIGHT + WEIGHT
@@ -153,6 +167,11 @@ CalculateAssimilation <- function(  iyear,
         # Model V5 
         #WEIGHT <- lambda * A_dailys[iday] * WEIGHT^(2/3) - mu * WEIGHT + WEIGHT
         #LENGTH <- k * (A_dailys[iday] * MaxLENGTH - LENGTH) + LENGTH
+
+        # V6 with energy instead
+        ENERGY <- k * (A_dailys[iday]) - MET_SMR + ENERGY
+        WEIGHT <- ENERGY / ED
+        LENGTH <- (WEIGHT/a1)^(1/a2)
     }
     results_DF <- data.frame(assimilated_weight = A_dailys, ingested_weight = i_dailys, weight = WEIGHT_daily, length = LENGTH_daily, jd = JulianDayV[1:length(WEIGHT_daily)], feeding_hours = h_feeds, search_rate = search_rates, particulates = particulates, filters = filters)
     
