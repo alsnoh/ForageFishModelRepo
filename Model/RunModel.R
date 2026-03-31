@@ -22,7 +22,7 @@ W0 <- 0.14 # initial weight in g
 L0 <- (W0/a1)^(1/a2) # initial length in cm 
 
 # parameters
-MaxWEIGHT <- 5 # master trait 
+MaxWEIGHT <- 3 # master trait 
 MaxLENGTH <- 18 # master trait
 k <- 1#/MaxWEIGHT # growth rate  0.025
 mu <- 0.1
@@ -52,7 +52,7 @@ suppressMessages(library(jsonlite))
 locations <- read.delim("data/locations.csv")
 
 # pick location "FoF", "DB", "Shetland", "ECG"
-scenario <- "FoF"
+scenario <- "Shetland"
 
 # load constants
 CONSTANTS <- read.csv("Model/CONSTANTS.csv")

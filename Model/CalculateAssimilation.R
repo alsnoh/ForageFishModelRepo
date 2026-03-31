@@ -78,11 +78,11 @@ CalculateAssimilation <- function(  iyear,
 
             for(imode in 1:NoModes){ # adding on to respective numerators/denominators if type matches mode
 
-                func_response_numerator[imode] <- func_response_numerator[imode] + capture_rate * prey_energy[itaxa] * (prey_mode[itaxa]==imode) #/prey_ed[itaxa] for weight not energy
+                func_response_numerator[imode] <- func_response_numerator[imode] + capture_rate * prey_energy[itaxa] * (prey_mode[itaxa]==imode) / prey_ed[itaxa] #for weight not energy
                 denominator[imode] <- denominator[imode] + capture_rate * handling_time * (prey_mode[itaxa]==imode)
             }
 
-            filter <- filter + filter_efficiency * prey_energy[itaxa] * abundance #/prey_ed[itaxa] for weight not energy
+            filter <- filter + filter_efficiency * prey_energy[itaxa] * abundance / prey_ed[itaxa] #for weight not energy
 
         }
         gape_max <- Ag_frac * MaxLENGTH
@@ -123,8 +123,8 @@ CalculateAssimilation <- function(  iyear,
                 }
             }
 
-            i_daily <- i_daily / 1000 # convert to kJ
-            A_daily <- i_daily*assimilation #account for assimilation efficiency
+            i_daily <- i_daily# / 1000 # convert to kJ
+            A_daily <- i_daily * assimilation #account for assimilation efficiency
             
         }
 
@@ -168,9 +168,14 @@ CalculateAssimilation <- function(  iyear,
         #WEIGHT <- lambda * A_dailys[iday] * WEIGHT^(2/3) - mu * WEIGHT + WEIGHT
         #LENGTH <- k * (A_dailys[iday] * MaxLENGTH - LENGTH) + LENGTH
 
-        # V6 with energy instead
-        ENERGY <- k * (A_dailys[iday]) - MET_SMR + ENERGY
-        WEIGHT <- ENERGY / ED
+        # V6 with energy instead and explicit metabolism
+        # ENERGY <- k * (A_dailys[iday]) - MET_SMR + ENERGY
+        # WEIGHT <- ENERGY / ED
+        # LENGTH <- (WEIGHT/a1)^(1/a2)
+
+        #V7 other form
+        n <- 3/4
+        WEIGHT <- A_dailys[iday] * (1 - (WEIGHT/MaxWEIGHT)^(1-n)) + WEIGHT
         LENGTH <- (WEIGHT/a1)^(1/a2)
     }
     results_DF <- data.frame(assimilated_weight = A_dailys, ingested_weight = i_dailys, weight = WEIGHT_daily, length = LENGTH_daily, jd = JulianDayV[1:length(WEIGHT_daily)], feeding_hours = h_feeds, search_rate = search_rates, particulates = particulates, filters = filters)
