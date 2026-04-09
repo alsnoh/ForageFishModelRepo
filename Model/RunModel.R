@@ -16,8 +16,8 @@ JD_FINISH <- 212 #212
 
 # initial weight and length
 #linear regression parameters for length-weight relationship
-a1 <- exp(-6.8488)
-a2 <- 3.4943
+a1 <- 0.0028#exp(-6.8488)
+a2 <- 3#3.4943
 W0 <- 0.14 # initial weight in g
 L0 <- (W0/a1)^(1/a2) # initial length in cm 
 
@@ -86,7 +86,7 @@ ENERGY <- W0 * ED
 WEIGHT <- W0
 LENGTH <- L0
 # Main model loop, calculating model results for each year
-for (iyear in 1:length(ModelRunLengths)) {  #  1:length(ModelRunLengths)
+for (iyear in 1:1) {  #  1:length(ModelRunLengths)
 
 
     NoDays <- ModelRunLengths[iyear]
@@ -106,7 +106,8 @@ for (iyear in 1:length(ModelRunLengths)) {  #  1:length(ModelRunLengths)
                                         prey_energy, 
                                         prey_ed, 
                                         prey_mode, 
-                                        prey_image_area, 
+                                        prey_image_area,
+                                        prey_name, 
                                         JulianDayV, 
                                         DayLengths, #DayLengthsConst for controlled experiments, DayLengths for actual data
                                         light, #lightConst

@@ -29,6 +29,11 @@ getr <- function(beam_attenuation,
                 Ke, 
                 tol) {
 
+    if (abs(Eb) < 1) {
+        r <- 0
+        return(r) 
+    }
+
     r <- sqrt(preyIA * E * (Eb/(Ke+Eb)) * 0.23)  #first guess for r
     
     vec <- deriv(preyIA, E, Eb, Ke, beam_attenuation, r)

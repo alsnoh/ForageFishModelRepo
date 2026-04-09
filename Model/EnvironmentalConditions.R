@@ -15,6 +15,7 @@ prey_energy = as.numeric(prey_info$energy)
 prey_ed = prey_info$energy_density # J/g
 prey_mode = convert_to_number(prey_info$mode) #prey_mode = as.numeric(prey_info$mode)
 prey_image_area = as.numeric(prey_info$image_area)
+prey_name <- prey_info$taxa
 
 
 ### visual parameters ### 
