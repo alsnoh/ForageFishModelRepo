@@ -1,7 +1,7 @@
 A1=0.82
 A2=0.0076
 Ua=0.12
-handling_time=0.0138888888888889
+handling_time=0.011111
 swimming_speed=1.5
 filter_speed=0.8
 C=0.23

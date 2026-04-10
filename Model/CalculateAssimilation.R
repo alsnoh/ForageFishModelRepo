@@ -1,4 +1,9 @@
-# Construct and solve van bertalanffy growth equation with ingestion term
+
+#######################################################################################################################################################
+######################################## Calculate assimilation and metabolism for daily growth of forage fish ########################################
+#######################################################################################################################################################
+
+
 source("Model/getr.R")
 source("Model/simulateLight.R")
 CalculateAssimilation <- function(  iyear, 
@@ -19,10 +24,15 @@ CalculateAssimilation <- function(  iyear,
                                     light, 
                                     a_c,
                                     mu,
-                                    lambda) {
+                                    lambda,
+                                    LENGTH,
+                                    WEIGHT,
+                                    ENERGY) 
+{
 
     i_dailys <- numeric(NoDays)
     A_dailys <- numeric(NoDays)
+    M_dailys <- numeric(NoDays)
     WEIGHT_daily <- numeric(NoDays)
     LENGTH_daily <- numeric(NoDays)
     ENERGY_daily <- numeric(NoDays)
@@ -31,59 +41,101 @@ CalculateAssimilation <- function(  iyear,
     particulates <- numeric(NoDays)
     filters <- numeric(NoDays)
 
-    for (iday in 1:NoDays){
+    # loop through days in growth season
+    for (iday in 1:NoDays)
+    {
 
+        # Keep track of Julian Day for model output
         JulianDay <- JulianDayV[iday]
 
-        h_feed_max <- DayLengths[iday + NoDays * (iyear - 1)] 
-        #assimilation <- assimilationV[iday + NoDays * (iyear - 1)]
-        assimilation <- (A1 + A2*temp[iday + NoDays * (iyear - 1)])-Ua
-        metabolism <-  M_FEED*Q10_MF^(temp[iday + NoDays * (iyear - 1)] / 10)
+        # Calculate factors that update each day not hour (temp data is daily)
+        h_feed_max <- DayLengths[iday + NoDays * (iyear - 1)] # hours of daylight
+        assimilation <- (A1 + A2*temp[iday + NoDays * (iyear - 1)])-Ua # temp dependent assimilation efficiency
 
-         feeding_time_fraction <- (MaxLENGTH-LENGTH)/MaxLENGTH # fraction of max length determines time spent feeding
-         if(feeding_time_fraction < 0) {
+        metabolism <-  M_FEED*Q10_MF^(temp[iday + NoDays * (iyear - 1)] / 10) # temp dependent metabolic cost
+        MET_SMR <- WEIGHT^rrr * metabolism # standard metabolic cost for 24h
+
+        # calculate hours feeding based on length relative to max length (can be switched off by setting h_feed = h_feed_max)
+        # assumes fish forage less as they approach max length
+        feeding_time_fraction <- (MaxLENGTH-LENGTH)/MaxLENGTH 
+        if(feeding_time_fraction < 0)
+        {
              feeding_time_fraction <- 0
-         }
-
+        }
         h_feed <- floor(h_feed_max * feeding_time_fraction) # hours spent feeding
         #h_feed <- h_feed_max # hours spent feeding
 
-        #initialise numerator of functional response for each prey class (mode) to be summed
-        func_response_numerator <- numeric(NoModes)
-        denominator <- numeric(NoModes)
+        probability <- numeric(NoTaxa)
+        abundance <- numeric(NoTaxa)
+        handling_times <- numeric(NoTaxa)
 
+
+
+        ################################### Filter submodel ##########################################
+
+        # Initialize filter intake for one hour to be summed for each prey type. Holling type I model
         filter <- 0
         profitability_filter <- numeric(NoTaxa)
+        # as things stand filter feeding doesn't vary by hour because of data resolution but this might change hence calculated hourly
 
+        for (itaxa in 1:NoTaxa)
+        {
+
+            # probability of capturing prey type for particulate feeding (sigmoidal function of prey size) 
+            # Filter probability calculated as a fraction of particulate efficiency (assumed to be less)
+            probability[itaxa] <- 1*(1-(1/(1+exp(-b* (log(prey_size[itaxa] /10.0 ) -  m  )  )))) 
+            filter_probability <- probability[itaxa] * 0.8
+
+
+            abundance[itaxa] <- prey_abundance[iday + NoDays * (iyear - 1), itaxa + 3] # abundance of prey type on given day 
+            retention_efficiency <- prey_size[itaxa] / (1 + prey_size[itaxa]) # efficiency of retaining prey once captured by filter feeding
+
+            filter <- filter + filter_probability * retention_efficiency * prey_energy[itaxa] * abundance[itaxa] #/ prey_ed[itaxa] #for weight not energy
+
+            # Measure of profitability of each prey type when filter feeding. To be used to diet optimality and analysis of submodels
+            profitability_filter[itaxa] <- filter_probability * retention_efficiency * prey_energy[itaxa] 
+        }
+
+        # calculate gape size and multiply by filter speed (assumed to be slower than swimming speed per hour for particulate feeding),
+        # constant efficiency currently set arbitrarily, and filtered food  
+        gape_max <- Ag_frac * MaxLENGTH
+        gape_size <- gape_max * LENGTH/(1+LENGTH) # gape size increases with length but asymptotes at gape_max
+
+        i_filter <- 0.8 * filter_speed * 60 * 60 * gape_size * filter  # hourly filter feeding intake 
+
+
+
+
+
+        ###################################### Particulate submodel ##########################################
+        # Holling type II model
+
+        # Light and turbidity (beam attenuation)
+        # Either used daily avg light data or this crudely simulated diel light
         light_sim <- simulateLight(light[iday + NoDays * (iyear - 1)]) # lightConst for controlled experiments, light for actual data
-        print(light_sim)
         ac = a_c[iday]
         ab <- (ac - 0.04)/0.2; # beam attenuation
 
-        # Particulate Feeding
-        E <- (   ( (LENGTH / 100 )*dec_dist_scale)^2 )/(  C *  (  (  10^(2.62 *log10( 7 ) -2.01)   )/1000000   )   ) # eye sensitivity 
-        profitability_partic <- numeric(NoTaxa)
+        # Fish eye sensitivity to prey contrast - function of eye size (which is a function of fish length) and prey image area 
+        E <- (   ( (LENGTH / 100 )*dec_dist_scale)^2 )/(  C *  (  (  10^(2.62 *log10( 7 ) -2.01)   )/1000000   )   )
 
+        #initialise numerator and denominator of functional response for each prey class (mode) to be summed
+        func_response_numerator <- numeric(NoModes)
+        denominator <- numeric(NoModes)
 
-        for (itaxa in 1:NoTaxa){
-            efficiency <- 1*(1-(1/(1+exp(-b* (log(prey_size[itaxa] /10.0 ) -  m  )  )))) # ok but decline in DB not so clear
-            abundance <- prey_abundance[iday + NoDays * (iyear - 1), itaxa + 3] # abundance of prey type on given day use  prey_abundanceConst for controlled experiments
-            filter_efficiency <- efficiency * 0.8
-            retention_efficiency <- prey_size[itaxa] / (1 + prey_size[itaxa]) # efficiency of retaining prey once captured by filter feeding
-            #profitability_partic[itaxa] <- efficiency * prey_energy[itaxa]# / handling_time # profitability of prey type for particulate feeding 
-            #profitability_filter[itaxa] <- filter_efficiency * prey_energy[itaxa] * retention_efficiency # profitability of prey type for filter feeding
-            filter <- filter + filter_efficiency * retention_efficiency * prey_energy[itaxa] * abundance #/ prey_ed[itaxa] #for weight not energy
+        for (itaxa in 1:NoTaxa)
+        {
+            handling_times[itaxa] <- handling_time + (5/3600) * prey_size[itaxa] / (LENGTH/10) # handling time increases with prey size and decreases with predator size
         }
 
-        #profitability_partic <- arrange(data.frame(profitability = profitability_partic, taxa = prey_name), by = desc(profitability))
-        #profitability_filter <- arrange(data.frame(profitability = profitability_filter, taxa = prey_name), by = desc(profitability))
-
+        # loop to calculate hourly particulate feeding intake
         i_partic <- numeric(h_feed)
-        for (hour in 1:h_feed) {
-            for (itaxa in 1:NoTaxa){
+        profitability_partic <- numeric(NoTaxa)
 
-                efficiency <- 1*(1-(1/(1+exp(-b* (log(prey_size[itaxa] /10.0 ) -  m  )  ))))
-                abundance <- prey_abundance[iday + NoDays * (iyear - 1), itaxa + 3]
+        for (hour in 1:h_feed) 
+        {
+            for (itaxa in 1:NoTaxa)
+            {
             
                 #script for solving implicit detection distance equation
                 detection_distance <- getr(ab, 
@@ -91,90 +143,118 @@ CalculateAssimilation <- function(  iyear,
                                         E,
                                         light_sim[hour], # lightConst for controlled experiments, light for actual data
                                         kR,
-                                        0.001)
+                                        0.001) # tolerance
             
 
                 search_rate <- pi*(detection_distance^2)*swimming_speed*60*60 * ( (LENGTH )/100 ) 
-                capture_rate <- efficiency * search_rate * abundance # capture rate ignoring handling time
+                capture_rate <- probability[itaxa] * search_rate * abundance[itaxa] # capture rate ignoring handling time
             
 
-
-                for(imode in 1:NoModes){ # adding on to respective numerators/denominators if type matches mode
-
+                # calcuate numerator and denominator of functional response for each prey mode (class)
+                # This is later used in a weighted sum to calculate total intake across modes
+                for(imode in 1:NoModes)
+                { 
                     func_response_numerator[imode] <- func_response_numerator[imode] + capture_rate * prey_energy[itaxa] * (prey_mode[itaxa]==imode)# / prey_ed[itaxa] #for weight not energy
-                    denominator[imode] <- denominator[imode] + capture_rate * handling_time * (prey_mode[itaxa]==imode)
+                    denominator[imode] <- denominator[imode] + capture_rate * handling_times[itaxa] * (prey_mode[itaxa]==imode)
                 }
 
-                
+                # measure of profitability of each prey type for particulate feeding - used for diet optimality and analysis of submodels
+                profitability_partic[itaxa] <- probability[itaxa] * prey_energy[itaxa] / handling_times[itaxa] 
             }
 
+            # Calculate functional response for reach mode as well as sum across modes
             intake_per_mode <- numeric(NoModes)
             total_max <- 0
-            for (imode in 1:NoModes){
+            for (imode in 1:NoModes)
+            {
                 intake_per_mode[imode] <- func_response_numerator[imode]/(1+denominator[imode])
                 total_max <- total_max + intake_per_mode[imode]  # this is across modes - used for determining relative profitability
 
+                # reset numerator and denominator for next hour of feeding
                 denominator[imode] <- 0
                 func_response_numerator[imode] <- 0
             }
 
-            # calculating maximum ingested weight per hour (assuming the sandeels spend time in each mode in proportion to the profitability of each mode)
-            if(total_max != 0) {
-                i_hourly <- 0
-                for (imode in 1:NoModes){
+            # calculating maximum ingested weight per hour (assuming the fish spend time in each mode in proportion to the profitability of each mode)
+            i_hourly <- 0
+            if(total_max != 0) 
+            {
+                for (imode in 1:NoModes)
+                {
                         i_hourly <- i_hourly + (intake_per_mode[imode]/total_max)  *  intake_per_mode[imode]
                 }
             }
-        i_partic[hour] <- i_hourly
+
+            # store hourly intake    
+            i_partic[hour] <- i_hourly
         }
 
 
+    ####################################### Combine submodels and calculate growth ###########################################
 
-        gape_max <- Ag_frac * MaxLENGTH
-        gape_size <- gape_max * LENGTH/(1+LENGTH) # gape size increases with length but asymptotes at gape_max
-        i_filter <- 0.8 * filter_speed * 60 * 60 * gape_size * filter  # hourly filter feeding intake 
-
-
+        # reset total daily intake each
         i_daily <- 0
-        MET_SMR <- WEIGHT^rrr * metabolism # standard metabolic cost for 24h
+        M_daily <- 0
 
-            # loop through all hours of feeding - update stomach content each hour
-            for(h in 1:h_feed)  
-            {
-                fitness_partic <- i_partic[h] - MET_SMR/24
-                fitness_filter <- i_filter - MET_SMR/24 
+        # loop through all hours of feeding
+        for(h in 1:h_feed)  
+        {   
+            # fitness is calculated as intake minus metabolic cost for the hour
+            fitness_partic <- i_partic[h] - MET_SMR/24
+            fitness_filter <- i_filter - MET_SMR/24 
 
-                i_daily <- i_daily + (fitness_partic * i_partic[h] + fitness_filter * i_filter) / (fitness_partic + fitness_filter) # weighted average of particulate and filter feeding intake based on relative fitness
+            # weighted average of particulate and filter feeding intake based on relative fitness
+            i_daily <- i_daily + (fitness_partic * i_partic[h] + fitness_filter * i_filter) / (fitness_partic + fitness_filter)
                 
-                # # or just one or the other for each hour depending on which is higher ingestion
-                # if (i_hourly > I_filter) {
-                # i_daily <- i_daily + i_hourly
-                # } else {
-                # i_daily <- i_daily + I_filter
-                # }
-            }
+            # # or just one or the other for each hour depending on which is higher ingestion
+            # if (i_hourly > I_filter) {
+            # i_daily <- i_daily + i_hourly
+            # } else {
+            # i_daily <- i_daily + I_filter
+            # }
+        }
 
-            i_daily <- i_daily / 1000 # convert to kJ
-            A_daily <- i_daily * assimilation #account for assimilation efficiency
+        # convert to kJ and calculate assimilated energy by multiplying by assimilation efficiency
+        i_daily <- i_daily / 1000 
+        A_daily <- i_daily * assimilation
             
-    
-        
+        M_daily <- (fitness_partic * MET_SMR * exp(swimming_speed*LENGTH * 0.02) + fitness_filter * MET_SMR * exp(filter_speed*LENGTH * 0.02)) / (fitness_partic + fitness_filter)
+
+        # store daily values for analysis and plotting
         particulates[iday] <- sum(i_partic)
         filters[iday] <- i_filter * h_feed
-
         i_dailys[iday] <- i_daily
         A_dailys[iday] <- A_daily
-
         search_rates[iday] <- search_rate
-
         h_feeds[iday] <- h_feed
+        M_dailys[iday] <- M_daily
 
         ENERGY_daily[iday] <- ENERGY
         WEIGHT_daily[iday] <- WEIGHT
         LENGTH_daily[iday] <- LENGTH
 
-        LENGTHcoeff <- LENGTH^(1-a2)/(a1*a2)
+        # calculate new values
+        # V6 with energy instead and explicit metabolism
+        ENERGY <- k * (A_dailys[iday]) - M_dailys[iday] + ENERGY
+        WEIGHT <- ENERGY / ED
+        LENGTH <- (WEIGHT/a1)^(1/a2)
 
+        
+    }
+
+    # arrange profitabilities in descending order for plotting and analysis of diet optimality
+    profitability_filter <- arrange(data.frame(profitability = profitability_filter, taxa = prey_name), by = desc(profitability))
+    profitability_partic <- arrange(data.frame(profitability = profitability_partic, taxa = prey_name), by = desc(profitability))
+
+    # store results for the year in a dataframe to be returned to main model loop
+    results_DF <- data.frame(assimilated_weight = A_dailys, ingested_weight = i_dailys, weight = WEIGHT_daily, length = LENGTH_daily, jd = JulianDayV[1:length(WEIGHT_daily)], feeding_hours = h_feeds, search_rate = search_rates, particulates = particulates, filters = filters)
+    
+    return(results_DF)
+}
+
+
+################################ model graveyard #####################################################################
+        # LENGTHcoeff <- LENGTH^(1-a2)/(a1*a2)
         # V1 growth based on von bertalanffy with ingestion term and asymptote at max weight - can be switched on/off by commenting out the relevant lines
         #  WEIGHT <- k * A_dailys[iday] * (MaxWEIGHT - WEIGHT) + WEIGHT
         #  LENGTH <- k * LENGTHcoeff * A_dailys[iday] * (MaxWEIGHT - a1*LENGTH^a2) + LENGTH
@@ -195,17 +275,7 @@ CalculateAssimilation <- function(  iyear,
         #WEIGHT <- lambda * A_dailys[iday] * WEIGHT^(2/3) - mu * WEIGHT + WEIGHT
         #LENGTH <- k * (A_dailys[iday] * MaxLENGTH - LENGTH) + LENGTH
 
-        # V6 with energy instead and explicit metabolism
-         ENERGY <- k * (A_dailys[iday]) - MET_SMR + ENERGY
-         WEIGHT <- ENERGY / ED
-         LENGTH <- (WEIGHT/a1)^(1/a2)
-
         #V7 other form
         # n <- 3/4
         # WEIGHT <- A_dailys[iday] * (1 - (WEIGHT/MaxWEIGHT)^(1-n)) + WEIGHT
         # LENGTH <- (WEIGHT/a1)^(1/a2)
-    }
-    results_DF <- data.frame(assimilated_weight = A_dailys, ingested_weight = i_dailys, weight = WEIGHT_daily, length = LENGTH_daily, jd = JulianDayV[1:length(WEIGHT_daily)], feeding_hours = h_feeds, search_rate = search_rates, particulates = particulates, filters = filters)
-    
-    return(results_DF)
-}

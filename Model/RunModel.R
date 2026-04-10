@@ -18,12 +18,12 @@ JD_FINISH <- 212 #212
 #linear regression parameters for length-weight relationship
 a1 <- 0.0028#exp(-6.8488)
 a2 <- 3#3.4943
-W0 <- 0.14 # initial weight in g
+W0 <- 0.18 # 0.14 initial weight in g
 L0 <- (W0/a1)^(1/a2) # initial length in cm 
 
 # parameters
-MaxWEIGHT <- 3 # master trait 
-MaxLENGTH <- 18 # master trait
+MaxWEIGHT <- 5 # master trait 
+MaxLENGTH <- 20 # master trait
 k <- 1#/MaxWEIGHT # growth rate  0.025
 mu <- 0.1
 lambda <- 0.5 
@@ -52,7 +52,7 @@ suppressMessages(library(jsonlite))
 locations <- read.delim("data/locations.csv")
 
 # pick location "FoF", "DB", "Shetland", "ECG"
-scenario <- "Shetland"
+scenario <- "FoF"
 
 # load constants
 CONSTANTS <- read.csv("Model/CONSTANTS.csv")
@@ -82,11 +82,11 @@ source("Model/CalculateAssimilation.R")
 #     metabolismV[iday] =  M_FEED*pow(Q10_MF , temp[iday] / 10) 
 # }
 
-ENERGY <- W0 * ED
-WEIGHT <- W0
-LENGTH <- L0
+energy <- W0 * ED
+weight <- W0
+length <- L0
 # Main model loop, calculating model results for each year
-for (iyear in 1:1) {  #  1:length(ModelRunLengths)
+for (iyear in 1:5) {  #  1:length(ModelRunLengths)
 
 
     NoDays <- ModelRunLengths[iyear]
@@ -113,13 +113,18 @@ for (iyear in 1:1) {  #  1:length(ModelRunLengths)
                                         light, #lightConst
                                         a_c,
                                         mu,
-                                        lambda)
+                                        lambda,
+                                        length,
+                                        weight,
+                                        energy)
 
     # Reset initial conditions every year or leave the same if you want to see the effect of growth over several years
-    WEIGHT <- W0
-    LENGTH <- L0
+    weight <- W0 #results_DF$weight[JD_FINISH] # W0
+    length <- L0 #results_DF$length[JD_FINISH] # L0
+    energy <- W0 * ED #weight * ED # W0 * ED
     results_daily_year <- data.frame(year = current_year, assimilated_weight = results_DF$assimilated_weight, ingested_weight = results_DF$ingested_weight, Weight = results_DF$weight, Length = results_DF$length, JulianDay = results_DF$jd, feeding_hours = results_DF$feeding_hours)
     DF <- rbind(DF,results_daily_year)
+    
 
 }
 
