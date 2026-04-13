@@ -40,6 +40,7 @@ CalculateAssimilation <- function(  iyear,
     search_rates <- numeric(NoDays)
     particulates <- numeric(NoDays)
     filters <- numeric(NoDays)
+    depths <- numeric(24*NoDays)
 
     # loop through days in growth season
     for (iday in 1:NoDays)
@@ -62,8 +63,9 @@ CalculateAssimilation <- function(  iyear,
         {
              feeding_time_fraction <- 0
         }
-        h_feed <- floor(h_feed_max * feeding_time_fraction) # hours spent feeding
+        #h_feed <- floor(h_feed_max * feeding_time_fraction) # hours spent feeding
         #h_feed <- h_feed_max # hours spent feeding
+        h_feed <- 24
 
         probability <- numeric(NoTaxa)
         abundance <- numeric(NoTaxa)
@@ -133,7 +135,13 @@ CalculateAssimilation <- function(  iyear,
         profitability_partic <- numeric(NoTaxa)
 
         for (hour in 1:h_feed) 
-        {
+        {   
+            distances <- c()
+            ambient_mult = exp(-ac*z)
+            light_at_depth <- light_sim[hour] * ambient_mult
+
+            depths[hour + (iday-1)*h_feed] <- z
+
             for (itaxa in 1:NoTaxa)
             {
             
@@ -160,6 +168,13 @@ CalculateAssimilation <- function(  iyear,
 
                 # measure of profitability of each prey type for particulate feeding - used for diet optimality and analysis of submodels
                 profitability_partic[itaxa] <- probability[itaxa] * prey_energy[itaxa] / handling_times[itaxa] 
+
+                distances <- c(distances, detection_distance)
+            }
+            avgDIST <- mean(distances)
+            z <- 10*a*light_at_depth*exp(-ac*z) / (swimming_speed * LENGTH^2) - a*avgDIST^2*pi*swimming_speed*LENGTH + z
+            if (z < 0) {
+                z <- 0
             }
 
             # Calculate functional response for reach mode as well as sum across modes
@@ -248,7 +263,7 @@ CalculateAssimilation <- function(  iyear,
 
     # store results for the year in a dataframe to be returned to main model loop
     results_DF <- data.frame(assimilated_weight = A_dailys, ingested_weight = i_dailys, weight = WEIGHT_daily, length = LENGTH_daily, jd = JulianDayV[1:length(WEIGHT_daily)], feeding_hours = h_feeds, search_rate = search_rates, particulates = particulates, filters = filters)
-    
+    plot(-depths[480:504], type = "l")
     return(results_DF)
 }
 

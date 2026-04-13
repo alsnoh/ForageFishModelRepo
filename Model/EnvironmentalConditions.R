@@ -78,7 +78,7 @@ z = CONSTANTS$value[CONSTANTS$Parameter == "z"] # depth
   
   ac = 0.1 # diffuse attenuation coefficient
   ambient_mult = exp(-ac*z)
-  light = light*ambient_mult
+  #light = light*ambient_mult
   a_c = rep(ac, length(JulianDayV ))
 
   

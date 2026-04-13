@@ -17,4 +17,5 @@ Q10_MF,3.1,double,1.5,3.4
 M_FEED,0.0045,double,0.0025,0.0065
 rrr,0.65,double,0.51,0.79
 ED,5,double,4,6
+a,50,double,25,75
 
