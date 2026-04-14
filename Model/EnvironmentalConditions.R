@@ -77,7 +77,7 @@ z = CONSTANTS$value[CONSTANTS$Parameter == "z"] # depth
   lightConst <- rep(mean(light, na.rm = TRUE), length(light))
   
   ac = 0.1 # diffuse attenuation coefficient
-  ambient_mult = exp(-ac*z)
+  #ambient_mult = exp(-ac*z)
   #light = light*ambient_mult
   a_c = rep(ac, length(JulianDayV ))
 
