@@ -4,7 +4,7 @@ A2,0.0076,double,0.0075,0.0077
 Ua,0.12,double,0.02,0.12
 handling_time,0.011111,double,0.0111111111111111,0.0166666666666667 
 swimming_speed,1.5,double,0.5,2
-filter_speed,0.8,double,0.1,1
+filter_speed_max,0.8,double,0.1,1
 C,0.23,double,0.2,0.26
 dec_dist_scale,0.5,double,0.333333333333333,1
 kR,3.5,double,2,5
@@ -18,4 +18,5 @@ M_FEED,0.0045,double,0.0025,0.0065
 rrr,0.65,double,0.51,0.79
 ED,5,double,4,6
 a,50,double,25,75
+I_opt,5,double,0.1,1
 

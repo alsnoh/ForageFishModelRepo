@@ -120,8 +120,8 @@ for (iyear in 1:1) {  #  1:length(ModelRunLengths)
                                         z)
 
     # Reset initial conditions every year or leave the same if you want to see the effect of growth over several years
-    weight <- W0 #results_DF$weight[JD_FINISH] # W0
-    length <- L0 #results_DF$length[JD_FINISH] # L0
+    weight <- W0  #results_DF$weight[JD_FINISH] # W0
+    length <- L0  #results_DF$length[JD_FINISH] # L0
     energy <- W0 * ED #weight * ED # W0 * ED
     results_daily_year <- data.frame(year = current_year, assimilated_weight = results_DF$assimilated_weight, ingested_weight = results_DF$ingested_weight, Weight = results_DF$weight, Length = results_DF$length, JulianDay = results_DF$jd, feeding_hours = results_DF$feeding_hours, Metabolism = results_DF$metabolism)
     DF <- rbind(DF,results_daily_year)

@@ -7,7 +7,7 @@ simulateLight <- function(light, dl) {
     b <- -dl * a
     for (i in 1:24) {
         if(i<5 || i > 5 + dl) {
-            light_sim[i] <- 0
+            light_sim[i] <- 0.01
         } else {
             light_sim[i] <- a * (i-5)^2 + b * (i-5)
         }
