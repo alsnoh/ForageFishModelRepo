@@ -86,7 +86,7 @@ energy <- W0 * ED
 weight <- W0
 length <- L0
 # Main model loop, calculating model results for each year
-for (iyear in 1:1) {  #  1:length(ModelRunLengths)
+for (iyear in 1:length(ModelRunLengths)) {  #  1:length(ModelRunLengths)
 
 
     NoDays <- ModelRunLengths[iyear]
