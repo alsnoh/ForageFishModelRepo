@@ -7,7 +7,7 @@
 #~~~~~~~~~~~ INITIAL SETUP ~~~~~~~~~~#
 
 # clear environment
-rm(list = ls())
+#rm(list = ls())
 
 
 #Julian days at start and end of model
@@ -52,7 +52,7 @@ suppressMessages(library(jsonlite))
 locations <- read.delim("data/locations.csv")
 
 # pick location "FoF", "DB", "Shetland", "ECG"
-scenario <- "FoF"
+scenarios <- c("FoF", "Shetland", "ECG")
 
 # load constants
 CONSTANTS <- read.csv("Model/CONSTANTS.csv")
@@ -61,8 +61,6 @@ CONSTANTS <- read.csv("Model/CONSTANTS.csv")
 source("Model/HeaderFile.R")
 source("Model/CONSTANTS.R")
 
-# setting up food and light data
-source("Model/EnvironmentalConditions.R")
 
 # loading function to calculate predicted length for one growth season, based on von bertalanffy
 source("Model/CalculateAssimilation.R")
@@ -81,56 +79,62 @@ source("Model/CalculateAssimilation.R")
 # for(iday in 1:length(input_id)) {
 #     metabolismV[iday] =  M_FEED*pow(Q10_MF , temp[iday] / 10) 
 # }
+for (scenario in scenarios) {
 
-energy <- W0 * ED
-weight <- W0
-length <- L0
-# Main model loop, calculating model results for each year
-for (iyear in 1:length(ModelRunLengths)) {  #  1:length(ModelRunLengths)
+    # setting up food and light data
+    source("Model/EnvironmentalConditions.R")
+
+    energy <- W0 * ED
+    weight <- W0
+    length <- L0
+    # Main model loop, calculating model results for each year
+    for (iyear in 1:length(ModelRunLengths)) {  #  1:length(ModelRunLengths)
 
 
-    NoDays <- ModelRunLengths[iyear]
-    current_year <- rep(prey_abundance[1 + NoDays * (iyear - 1),2], NoDays)
+        NoDays <- ModelRunLengths[iyear]
+        current_year <- rep(prey_abundance[1 + NoDays * (iyear - 1),2], NoDays)
 
-    # Calculate max weight
-    #MaxWEIGHT <- CalculateMaxWeight(iyear, NoDays, assimilationV, WEIGHT)
+        # Calculate max weight
+        #MaxWEIGHT <- CalculateMaxWeight(iyear, NoDays, assimilationV, WEIGHT)
 
-    results_DF <- CalculateAssimilation(iyear, 
-                                        NoDays, 
-                                        MaxWEIGHT, 
-                                        MaxLENGTH,
-                                        temp, 
-                                        #assimilationV,
-                                        prey_abundance, #prey_abundanceConst for controlled experiments, prey_abundance for actual data
-                                        prey_size, 
-                                        prey_energy, 
-                                        prey_ed, 
-                                        prey_mode, 
-                                        prey_image_area,
-                                        prey_name, 
-                                        JulianDayV, 
-                                        DayLengths, #DayLengthsConst for controlled experiments, DayLengths for actual data
-                                        light, #lightConst
-                                        a_c,
-                                        mu,
-                                        lambda,
-                                        length,
-                                        weight,
-                                        energy,
-                                        z)
+        results_DF <- CalculateAssimilation(iyear, 
+                                            NoDays, 
+                                            MaxWEIGHT, 
+                                            MaxLENGTH,
+                                            temp, 
+                                            #assimilationV,
+                                            prey_abundance, #prey_abundanceConst for controlled experiments, prey_abundance for actual data
+                                            prey_size, 
+                                            prey_energy, 
+                                            prey_ed, 
+                                            prey_mode, 
+                                            prey_image_area,
+                                            prey_name, 
+                                            JulianDayV, 
+                                            DayLengths, #DayLengthsConst for controlled experiments, DayLengths for actual data
+                                            light, #lightConst
+                                            a_c,
+                                            mu,
+                                            lambda,
+                                            length,
+                                            weight,
+                                            energy,
+                                            z)
 
-    # Reset initial conditions every year or leave the same if you want to see the effect of growth over several years
-    weight <- W0  #results_DF$weight[JD_FINISH] # W0
-    length <- L0  #results_DF$length[JD_FINISH] # L0
-    energy <- W0 * ED #weight * ED # W0 * ED
-    results_daily_year <- data.frame(year = current_year, assimilated_weight = results_DF$assimilated_weight, ingested_weight = results_DF$ingested_weight, Weight = results_DF$weight, Length = results_DF$length, JulianDay = results_DF$jd, feeding_hours = results_DF$feeding_hours, Metabolism = results_DF$metabolism)
-    DF <- rbind(DF,results_daily_year)
-    
+        # Reset initial conditions every year or leave the same if you want to see the effect of growth over several years
+        weight <- W0  #results_DF$weight[JD_FINISH] # W0
+        length <- L0  #results_DF$length[JD_FINISH] # L0
+        energy <- W0 * ED #weight * ED # W0 * ED
+        results_daily_year <- data.frame(year = current_year, assimilated_weight = results_DF$assimilated_weight, ingested_weight = results_DF$ingested_weight, Weight = results_DF$weight, Length = results_DF$length, JulianDay = results_DF$jd, feeding_hours = results_DF$feeding_hours, Metabolism = results_DF$metabolism)
+        DF <- rbind(DF,results_daily_year)
+        
 
+    }
+
+
+    source("Model/saveResults.R")
+    DF <- data.frame()
 }
-
-
-source("Model/saveResults.R")
 
 
 

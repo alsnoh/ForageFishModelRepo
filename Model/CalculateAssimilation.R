@@ -67,7 +67,7 @@ CalculateAssimilation <- function(  iyear,
              feeding_time_fraction <- 0
         }
         #h_feed <- floor(h_feed_max * feeding_time_fraction) # hours spent feeding
-        h_feed <- floor(24 * feeding_time_fraction) # for testing with constant day lengths
+        h_feed <- ceiling(24 * feeding_time_fraction) # for testing with constant day lengths
         #h_feed <- h_feed_max # hours spent feeding
         #h_feed <- 24
 

@@ -1,4 +1,4 @@
-A1=0.82
+A1=0.73
 A2=0.0076
 Ua=0.12
 handling_time=0.011111
@@ -14,7 +14,5 @@ Ag_frac=5e-07
 filter_fraction=0.85
 Q10_MF=3.1
 M_FEED=0.0045
-rrr=0.65
+rrr=0.79
 ED=5
-a=50
-I_opt=5

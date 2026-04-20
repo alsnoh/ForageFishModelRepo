@@ -11,6 +11,10 @@ simulateLight <- function(light, dl) {
         } else {
             light_sim[i] <- a * (i-5)^2 + b * (i-5)
         }
+
+        if(light_sim[i] < 0) {
+            light_sim[i] <- 0
+        }
     }
     return(light_sim)
 

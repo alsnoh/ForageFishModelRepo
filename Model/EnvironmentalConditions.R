@@ -26,16 +26,6 @@ z = CONSTANTS$value[CONSTANTS$Parameter == "z"] # depth
   prey_abundance = read.csv(paste0("data/abundanceData/abundance_", scenario, ".csv"))
   prey_abundance = prey_abundance[prey_abundance$jd >= JD_ADDED & prey_abundance$jd <= JD_FINISH,]
   years <- prey_abundance$year
-  prey_abundanceAVG <- data.frame()
-
-
-  count <- 1
-  for (iiyear in unique(years)) {
-     prey_abundanceAVG <- rbind(prey_abundanceAVG, colMeans(prey_abundance[prey_abundance$year == iiyear,4:ncol(prey_abundance)], na.rm = TRUE)) # FOR COMparing different years
-     count <- count + 1
-  }
-  prey_abundanceAVG <- cbind(prey_abundanceAVG, unique(years))
-  colnames(prey_abundanceAVG)[1:ncol(prey_abundanceAVG)-1] <- colnames(prey_abundance)[4:ncol(prey_abundance)]
   
  
   
@@ -47,7 +37,7 @@ z = CONSTANTS$value[CONSTANTS$Parameter == "z"] # depth
   
 
   # input id (if several scenarios are run in sequence)
-  input_id = rep(1:sum(prey_abundance$jd == JD_ADDED), each = length(JD_ADDED:JD_FINISH))
+  input_id <- 1:sum(prey_abundance$jd == JD_ADDED)
   
   
   # latitude for day lengths
@@ -80,11 +70,7 @@ z = CONSTANTS$value[CONSTANTS$Parameter == "z"] # depth
   #ambient_mult = exp(-ac*z)
   #light = light*ambient_mult
   a_c = rep(ac, length(JulianDayV ))
-
-  
-  
-  JD_ADDED <- rep(JD_ADDED, max(input_id))  
-  
+ 
   ModelRunLengths <- rep(length(min(JulianDayV):max(JulianDayV)), max(input_id))
   NoModes <- length(unique(prey_mode))
   
