@@ -12,7 +12,7 @@ Shetland_trend <- data.frame()
 CONSTANTS_original <- read.csv("Model/CONSTANTS.csv")
 
 # Select which parameters to change (refer to rows in CONSTANTS.csv and then -1)
-pars <- c(1:nrow(CONSTANTS_original)-1) 
+pars <- c(1:(nrow(CONSTANTS_original)-1)) 
 #pars <- (1:1)
 
 for (par in pars) {

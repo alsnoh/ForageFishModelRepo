@@ -66,7 +66,7 @@ CalculateAssimilation <- function(  iyear,
         {
              feeding_time_fraction <- 0
         }
-        #h_feed <- floor(h_feed_max * feeding_time_fraction) # hours spent feeding
+        #h_feed <- ceiling(h_feed_max * feeding_time_fraction) # hours spent feeding
         h_feed <- ceiling(24 * feeding_time_fraction) # for testing with constant day lengths
         #h_feed <- h_feed_max # hours spent feeding
         #h_feed <- 24
@@ -100,7 +100,7 @@ CalculateAssimilation <- function(  iyear,
             # probability of capturing prey type for particulate feeding (sigmoidal function of prey size) 
             # Filter probability calculated as a fraction of particulate efficiency (assumed to be less)
             probability[itaxa] <- 1*(1-(1/(1+exp(-b* (log(prey_size[itaxa] /10.0 ) -  m  )  )))) 
-            filter_probability <- probability[itaxa] * 0.8
+            filter_probability <- probability[itaxa] * filter_fraction
 
 
             abundance[itaxa] <- prey_abundance[iday + NoDays * (iyear - 1), itaxa + 3] # abundance of prey type on given day 
@@ -114,9 +114,11 @@ CalculateAssimilation <- function(  iyear,
 
         # calculate gape size and multiply by filter speed (assumed to be slower than swimming speed per hour for particulate feeding),
         # constant efficiency currently set arbitrarily, and filtered food  
-        gape_max <- Ag_frac * MaxLENGTH
-        gape_size <- gape_max * LENGTH/(1+LENGTH) # gape size increases with length but asymptotes at gape_max
+        #gape_max <- Ag_frac * MaxLENGTH
+        #gape_size <- gape_max * LENGTH/(1+LENGTH) # gape size increases with length but asymptotes at gape_max
 
+        gape_radius <- 0.5*(Ag1*(LENGTH*10)^2 + Ag2*LENGTH*10) # Gape width as function of length for horse mackerel
+        gape_size <- pi * (gape_radius * 0.001)^2 # convert to area m^2
         for (hour in 1:h_feed) 
         {
 
@@ -131,7 +133,7 @@ CalculateAssimilation <- function(  iyear,
                filter_speed[hour] <- filter_speed_max * (light_at_depth[hour] + 3.2) / 13.2
             }
 
-            i_filter[hour] <- filter_speed[hour] * 60 * 60 * gape_size * filter  # hourly filter feeding intake 
+            i_filter[hour] <- filter_speed[hour] * 60 * 60 * (LENGTH / 100) * gape_size * filter  # hourly filter feeding intake 
         }
 
 
@@ -248,6 +250,9 @@ CalculateAssimilation <- function(  iyear,
             fitness_partic <- i_partic[h] - MET_SMR * exp(swimming_speed*LENGTH * 0.02)/24
             fitness_filter <- i_filter[h] - MET_SMR * exp(filter_speed[h]*LENGTH * 0.02)/24 
             #fitness_filter <- 0 # for testing without filter feeding
+            #fitness_partic <- 0 # for testing without particulate feeding
+
+             # weighted average of particulate and filter feeding intake based on relative fitness
 
             # weighted average of particulate and filter feeding intake based on relative fitness
             i_daily <- i_daily + (fitness_partic * i_partic[h] + fitness_filter * i_filter[h]) / (fitness_partic + fitness_filter)
@@ -294,7 +299,7 @@ CalculateAssimilation <- function(  iyear,
         #ENERGY <- k * (A_dailys[iday]) - MET_SMR * exp(swimming_speed*LENGTH * 0.02) + ENERGY
         WEIGHT <- ENERGY / ED
         LENGTH <- (WEIGHT/a1)^(1/a2)
-
+        #print(LENGTH)
         
     }
 
