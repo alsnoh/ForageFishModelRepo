@@ -15,5 +15,5 @@ Ag2=0.27
 filter_fraction=0.5
 Q10_MF=3.1
 M_FEED=0.0045
-rrr=0.79
+rrr=0.65
 ED=5
