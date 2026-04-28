@@ -118,13 +118,13 @@ CalculateAssimilation <- function(  iyear,
         #gape_max <- Ag_frac * MaxLENGTH
         #gape_size <- gape_max * LENGTH/(1+LENGTH) # gape size increases with length but asymptotes at gape_max
 
-        gape_radius <- 0.5*(Ag1*(LENGTH*10)^2 + Ag2*LENGTH*10) # Gape width as function of length for horse mackerel
+        gape_radius <- Ag2*LENGTH*5#0.5*(Ag1*(LENGTH*10)^2 + Ag2*LENGTH*10) # Ag2*LENGTH*5 Gape width as function of length for horse mackerel
         gape_size <- pi * (gape_radius * 0.001)^2 # convert to area m^2
         for (hour in 1:h_feed) 
         {
 
             ambient_mult = exp(-ac*z)
-            light_at_depth[hour] <- light_sim[hour] * ambient_mult
+            light_at_depth[hour] <- light[1]#light_sim[hour] * ambient_mult
             if (light_at_depth[hour] > 10)
             {
                 filter_speed[hour] <- filter_speed_max
@@ -252,8 +252,8 @@ CalculateAssimilation <- function(  iyear,
         {   
             # fitness is calculated as intake minus metabolic cost for the hour
             fitness_partic <- i_partic[h] - MET_SMR * exp(swimming_speed*LENGTH * 0.02)/24
-            fitness_filter <- i_filter[h] - 1.5*MET_SMR * exp(filter_speed[h]*LENGTH * 0.02)/24 
-            #fitness_filter <- 0 # for testing without filter feeding
+            #fitness_filter <- i_filter[h] - 1.5*MET_SMR * exp(filter_speed[h]*LENGTH * 0.02)/24 
+            fitness_filter <- 0 # for testing without filter feeding
             #fitness_partic <- 0 # for testing without particulate feeding
 
              # weighted average of particulate and filter feeding intake based on relative fitness

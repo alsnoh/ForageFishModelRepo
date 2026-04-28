@@ -7,7 +7,7 @@
 #~~~~~~~~~~~ INITIAL SETUP ~~~~~~~~~~#
 
 # clear environment
-#rm(list = ls())
+rm(list = ls())
 
 
 #Julian days at start and end of model
