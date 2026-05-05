@@ -88,7 +88,7 @@ for (scenario in scenarios) {
     weight <- W0
     length <- L0
     # Main model loop, calculating model results for each year
-    for (iyear in 1:10) {  #  1:length(ModelRunLengths)
+    for (iyear in 1:15) {  #  1:length(ModelRunLengths)
 
 
         NoDays <- ModelRunLengths[iyear]
@@ -101,9 +101,9 @@ for (scenario in scenarios) {
                                             NoDays, 
                                             MaxWEIGHT, 
                                             MaxLENGTH,
-                                            tempConst, #tempConst for controlled experiments, temp for actual data
+                                            temp, #tempConst for controlled experiments, temp for actual data
                                             #assimilationV,
-                                            prey_abundanceConst, #prey_abundanceConst for controlled experiments, prey_abundance for actual data
+                                            prey_abundance, #prey_abundanceConst for controlled experiments, prey_abundance for actual data
                                             prey_size, 
                                             prey_energy, 
                                             prey_ed, 
@@ -111,8 +111,8 @@ for (scenario in scenarios) {
                                             prey_image_area,
                                             prey_name, 
                                             JulianDayV, 
-                                            DayLengthsConst, #DayLengthsConst for controlled experiments, DayLengths for actual data
-                                            lightConst, #lightConst
+                                            DayLengths, #DayLengthsConst for controlled experiments, DayLengths for actual data
+                                            light, #lightConst
                                             a_c,
                                             mu,
                                             lambda,
