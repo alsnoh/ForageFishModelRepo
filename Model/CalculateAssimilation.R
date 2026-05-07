@@ -119,10 +119,12 @@ CalculateAssimilation <- function(  iyear,
 
         # calculate gape size and multiply by filter speed (assumed to be slower than swimming speed per hour for particulate feeding),
         # constant efficiency currently set arbitrarily, and filtered food  
-        #gape_max <- Ag_frac * MaxLENGTH
-        #gape_size <- gape_max * LENGTH/(1+LENGTH) # gape size increases with length but asymptotes at gape_max
+        # Ag_frac <- 0.05
+        # gape_radius_max <- Ag_frac * MaxLENGTH *10
+        # gape_max <- pi * gape_radius_max^2 / 1000000 # convert to m^2
+        # gape_size <- gape_max * LENGTH/((MaxLENGTH/200)+LENGTH) # gape size increases with length but asymptotes at gape_max
 
-        gape_radius <- Ag2*LENGTH#0.5*(Ag1*(LENGTH*10)^2 + Ag2*LENGTH*10) # Ag2*LENGTH*5 Gape width as function of length for horse mackerel
+        gape_radius <- Ag2*LENGTH#0.5*( 0.108883*LENGTH*10-0.0007684)#0.5*(Ag1*(LENGTH*10)^2 + Ag2*LENGTH*10) # Ag2*LENGTH*5  # -2.625+0.1731*(LENGTH)-0.0003099*(LENGTH*10)^2 Gape width as function of length for horse mackerel
         gape_size <- pi * (gape_radius * 0.001)^2 # convert to area m^2
         for (hour in 1:h_feed) 
         {
@@ -253,12 +255,16 @@ CalculateAssimilation <- function(  iyear,
         M_daily <- 0
         fitness_partic <- numeric(h_feed)
         fitness_filter <- numeric(h_feed)
+
+        particMeta <- 2.5*MET_SMR * exp(swimming_speed*LENGTH * 0.02)
+        filterMeta <- 2.5*1.5*MET_SMR * exp(filter_speed*LENGTH * 0.02)
+
         # loop through all hours of feeding
         for(h in 1:h_feed)  
         {   
             # fitness is calculated as intake minus metabolic cost for the hour
-            #fitness_partic[h] <- i_partic[h] - MET_SMR * exp(swimming_speed*LENGTH * 0.02)/24
-            fitness_filter[h] <- i_filter[h] - 1.5*MET_SMR * exp(filter_speed[h]*LENGTH * 0.02)/24 
+            fitness_partic[h] <- i_partic[h] - particMeta/24
+            fitness_filter[h] <- i_filter[h] - filterMeta/24 
             if(fitness_partic[h] < 0)
             {
                 fitness_partic[h] <- 0
@@ -268,13 +274,15 @@ CalculateAssimilation <- function(  iyear,
                 fitness_filter[h] <- 0
             }
             #fitness_filter[h] <- 0 # for testing without filter feeding
-            fitness_partic[h] <- 0 # for testing without particulate feeding
+            #fitness_partic[h] <- 0 # for testing without particulate feeding
         }
         fitnessFilterDF <- data.frame(hour = 1:h_feed, fitness_filter = fitness_filter, ingestion_filter = i_filter)
         fitnessParticDF <- data.frame(hour = 1:h_feed, fitness_partic = fitness_partic, ingestion_partic = i_partic)
 
         fitnessFilterDF <- fitnessFilterDF %>% arrange(desc(fitness_filter))
         fitnessParticDF <- fitnessParticDF %>% arrange(desc(fitness_partic))
+
+        count <- 0
         for(hh in 1:hoursEating){
 
              # weighted average of particulate and filter feeding intake based on relative fitness
@@ -286,7 +294,8 @@ CalculateAssimilation <- function(  iyear,
             {
             # weighted average of particulate and filter feeding intake based on relative fitness
                 i_daily <- i_daily + (fitnessParticDF$fitness_partic[hh] * fitnessParticDF$ingestion_partic[hh] + fitnessFilterDF$fitness_filter[hh] * fitnessFilterDF$ingestion_filter[hh]) / (fitnessParticDF$fitness_partic[hh] + fitnessFilterDF$fitness_filter[hh])
-                M_daily <- M_daily + 1/24 * (fitnessParticDF$fitness_partic[hh] * MET_SMR * exp(swimming_speed*LENGTH * 0.02) + 1.5*fitnessFilterDF$fitness_filter[hh] * MET_SMR * exp(filter_speed[hh]*LENGTH * 0.02)) / (fitnessParticDF$fitness_partic[hh] + fitnessFilterDF$fitness_filter[hh])
+                M_daily <- M_daily + 1/24 * (fitnessParticDF$fitness_partic[hh] * particMeta + fitnessFilterDF$fitness_filter[hh] * filterMeta[hh]) / (fitnessParticDF$fitness_partic[hh] + fitnessFilterDF$fitness_filter[hh])
+                count <- count + 1
             }
             
             # # or just one or the other for each hour depending on which is higher ingestion
@@ -316,7 +325,7 @@ CalculateAssimilation <- function(  iyear,
         i_dailys[iday] <- i_daily
         A_dailys[iday] <- A_daily
         search_rates[iday] <- pi*(sum(dists)^2)*swimming_speed*60*60 * ( (LENGTH )/100 )
-        h_feeds[iday] <- h_feed
+        h_feeds[iday] <- count
         M_dailys[iday] <- M_daily
 
         ENERGY_daily[iday] <- ENERGY
@@ -330,7 +339,20 @@ CalculateAssimilation <- function(  iyear,
         WEIGHT <- ENERGY / ED
         LENGTH <- (WEIGHT/a1)^(1/a2)
         #print(LENGTH)
+
+        if (ENERGY <= 0)
+        {
+            ENERGY <- 0
+            WEIGHT <- 0
+            LENGTH <- 0
+            break
+        }
         
+    }
+    if (ENERGY == 0)
+    {
+        results_DF <- data.frame(assimilated_weight = A_dailys, ingested_weight = i_dailys, weight = WEIGHT_daily, length = LENGTH_daily, jd = JulianDayV[1:length(WEIGHT_daily)], feeding_hours = h_feeds, search_rate = search_rates, particulates = particulates, filters = filters, metabolism = M_dailys)
+        return(results_DF)
     }
 
     # arrange profitabilities in descending order for plotting and analysis of diet optimality

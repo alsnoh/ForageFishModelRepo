@@ -101,9 +101,9 @@ for (scenario in scenarios) {
                                             NoDays, 
                                             MaxWEIGHT, 
                                             MaxLENGTH,
-                                            temp, #tempConst for controlled experiments, temp for actual data
+                                            tempConst, #tempConst for controlled experiments, temp for actual data
                                             #assimilationV,
-                                            prey_abundance, #prey_abundanceConst for controlled experiments, prey_abundance for actual data
+                                            prey_abundanceConst, #prey_abundanceConst for controlled experiments, prey_abundance for actual data
                                             prey_size, 
                                             prey_energy, 
                                             prey_ed, 
@@ -111,8 +111,8 @@ for (scenario in scenarios) {
                                             prey_image_area,
                                             prey_name, 
                                             JulianDayV, 
-                                            DayLengths, #DayLengthsConst for controlled experiments, DayLengths for actual data
-                                            light, #lightConst
+                                            DayLengthsConst, #DayLengthsConst for controlled experiments, DayLengths for actual data
+                                            lightConst, #lightConst
                                             a_c,
                                             mu,
                                             lambda,
@@ -127,6 +127,10 @@ for (scenario in scenarios) {
         energy <- weight*ED #weight * ED # W0 * ED
         results_daily_year <- data.frame(year = current_year, assimilated_weight = results_DF$assimilated_weight, ingested_weight = results_DF$ingested_weight, Weight = results_DF$weight, Length = results_DF$length, JulianDay = results_DF$jd, feeding_hours = results_DF$feeding_hours, Metabolism = results_DF$metabolism)
         DF <- rbind(DF,results_daily_year)
+        if (weight == 0)
+        {
+            break
+        }
         
 
     }
