@@ -41,6 +41,7 @@ CalculateAssimilation <- function(  iyear,
     search_rates <- numeric(NoDays)
     particulates <- numeric(NoDays)
     filters <- numeric(NoDays)
+    percentages_partic <- numeric(NoDays)
     #depths <- numeric(24*NoDays)
     #depths_daily <- numeric(NoDays)
 
@@ -54,7 +55,7 @@ CalculateAssimilation <- function(  iyear,
         # Calculate factors that update each day not hour (temp data is daily)
         h_feed_max <- DayLengths[iday + NoDays * (iyear - 1)] # hours of daylight
         #h_feed_max <- 24 # for testing with constant day lengths
-        assimilation <- (A1 + A2*temp[iday + NoDays * (iyear - 1)])-Ua # temp dependent assimilation efficiency
+        assimilation <- 2*((A1 + A2*temp[iday + NoDays * (iyear - 1)])-Ua) # temp dependent assimilation efficiency
 
         metabolism <-  M_FEED*Q10_MF^(temp[iday + NoDays * (iyear - 1)] / 10) # temp dependent metabolic cost
         MET_SMR <- WEIGHT^rrr * metabolism # standard metabolic cost for 24h
@@ -251,33 +252,41 @@ CalculateAssimilation <- function(  iyear,
     ####################################### Combine submodels and calculate growth ###########################################
         #hoursEating <- h_feed 
         # reset total daily intake each
-        i_daily <- 0
-        M_daily <- 0
+        A_daily <- numeric(h_feed)
+        M_daily <- numeric(h_feed)
         fitness_partic <- numeric(h_feed)
         fitness_filter <- numeric(h_feed)
+        fitness_hiding <- numeric(h_feed)
+        net_energy <- numeric(h_feed)
+        
 
-        particMeta <- 2.5*MET_SMR * exp(swimming_speed*LENGTH * 0.02)
-        filterMeta <- 2.5*1.5*MET_SMR * exp(filter_speed*LENGTH * 0.02)
+        
+
+        particMeta <- MET_SMR * exp(swimming_speed*LENGTH * 0.02)
+        filterMeta <- 1.5*MET_SMR * exp(filter_speed*LENGTH * 0.02)
 
         # loop through all hours of feeding
+        A_partic <- assimilation * i_partic
+        A_filter <- assimilation * i_filter
         for(h in 1:h_feed)  
         {   
             # fitness is calculated as intake minus metabolic cost for the hour
-            fitness_partic[h] <- i_partic[h] - particMeta/24
-            fitness_filter[h] <- i_filter[h] - filterMeta/24 
-            if(fitness_partic[h] < 0)
-            {
-                fitness_partic[h] <- 0
-            }
-            if(fitness_filter[h] < 0)
-            {
-                fitness_filter[h] <- 0
-            }
+            fitness_partic[h] <- 24 * A_partic[h] / (particMeta * (1+mu)) #max(A_partic[h] - particMeta/24, 0)
+            fitness_filter[h] <- 24 * A_filter[h] / (filterMeta[h] * (1+mu)) #max(A_filter[h] - filterMeta[h]/24, 0)
+            #fitness_hiding[h] <- 24 / MET_SMR #-MET_SMR/24 # fitness of hiding is negative metabolic cost with no intake
+            # if(fitness_partic[h] < 0)
+            # {
+            #     fitness_partic[h] <- 0
+            # }
+            # if(fitness_filter[h] < 0)
+            # {
+            #     fitness_filter[h] <- 0
+            # }
             #fitness_filter[h] <- 0 # for testing without filter feeding
             #fitness_partic[h] <- 0 # for testing without particulate feeding
         }
-        fitnessFilterDF <- data.frame(hour = 1:h_feed, fitness_filter = fitness_filter, ingestion_filter = i_filter)
-        fitnessParticDF <- data.frame(hour = 1:h_feed, fitness_partic = fitness_partic, ingestion_partic = i_partic)
+        fitnessFilterDF <- data.frame(hour = 1:h_feed, fitness_filter = fitness_filter, assimilation_filter = A_filter, meta_filter = filterMeta/24)
+        fitnessParticDF <- data.frame(hour = 1:h_feed, fitness_partic = fitness_partic, assimilation_partic = A_partic, meta_partic = rep(particMeta/24, h_feed))
 
         fitnessFilterDF <- fitnessFilterDF %>% arrange(desc(fitness_filter))
         fitnessParticDF <- fitnessParticDF %>% arrange(desc(fitness_partic))
@@ -287,17 +296,31 @@ CalculateAssimilation <- function(  iyear,
 
              # weighted average of particulate and filter feeding intake based on relative fitness
              # if neither profitable then no intake for that hour, if one is profitable and the other isn't then just the profitable one contributes to intake, if both are profitable then weighted average of the two based on relative fitness
-            if (fitnessParticDF$fitness_partic[hh] + fitnessFilterDF$fitness_filter[hh] == 0)
+            # if (fitnessParticDF$fitness_partic[hh] <= -MET_SMR/24 && fitnessFilterDF$fitness_filter[hh] <= -MET_SMR/24)
+            # {
+            #     M_daily <- M_daily + 1/24 * MET_SMR
+            # } else
+            # {
+            # # weighted average of particulate and filter feeding intake based on relative fitness
+            #     A_daily[hh] <- fitnessParticDF$assimilation_partic[hh] #(fitnessParticDF$fitness_partic[hh] * fitnessParticDF$assimilation_partic[hh] + fitnessFilterDF$fitness_filter[hh] * fitnessFilterDF$assimilation_filter[hh]) / (fitnessParticDF$fitness_partic[hh] + fitnessFilterDF$fitness_filter[hh])
+            #     M_daily[hh] <- fitnessParticDF$meta_partic[hh]#(fitnessParticDF$fitness_partic[hh] * fitnessParticDF$meta_partic[hh] + fitnessFilterDF$fitness_filter[hh] * fitnessFilterDF$meta_filter[hh]) / (fitnessParticDF$fitness_partic[hh] + fitnessFilterDF$fitness_filter[hh])
+            #     count <- count + 1
+            # }
+            A_daily[hh] <- (fitnessParticDF$fitness_partic[hh] * fitnessParticDF$assimilation_partic[hh] + fitnessFilterDF$fitness_filter[hh] * fitnessFilterDF$assimilation_filter[hh]) / (fitnessParticDF$fitness_partic[hh] + fitnessFilterDF$fitness_filter[hh] + fitness_hiding[hh])
+            M_daily[hh] <- (fitnessParticDF$fitness_partic[hh] * fitnessParticDF$meta_partic[hh] + fitnessFilterDF$fitness_filter[hh] * fitnessFilterDF$meta_filter[hh]) / (fitnessParticDF$fitness_partic[hh] + fitnessFilterDF$fitness_filter[hh] + fitness_hiding[hh])
+
+            A_daily[hh] <- A_daily[hh] / 1000 # convert to kJ
+
+            net_energy[hh] <- A_daily[hh] - M_daily[hh]
+            if (net_energy[hh] < -(MET_SMR/24))
             {
-                M_daily <- M_daily + 1/24 * MET_SMR
-            } else 
-            {
-            # weighted average of particulate and filter feeding intake based on relative fitness
-                i_daily <- i_daily + (fitnessParticDF$fitness_partic[hh] * fitnessParticDF$ingestion_partic[hh] + fitnessFilterDF$fitness_filter[hh] * fitnessFilterDF$ingestion_filter[hh]) / (fitnessParticDF$fitness_partic[hh] + fitnessFilterDF$fitness_filter[hh])
-                M_daily <- M_daily + 1/24 * (fitnessParticDF$fitness_partic[hh] * particMeta + fitnessFilterDF$fitness_filter[hh] * filterMeta[hh]) / (fitnessParticDF$fitness_partic[hh] + fitnessFilterDF$fitness_filter[hh])
+                A_daily[hh] <- 0
+                M_daily[hh] <- MET_SMR/24
                 count <- count + 1
             }
             
+            #M_daily[hoursEating+1] <- (24 - hoursEating) * MET_SMR / 24 # metabolic cost for hours not spent feeding
+
             # # or just one or the other for each hour depending on which is higher ingestion
             # if (i_partic[h] > i_filter) {
             # i_daily <- i_daily + i_partic[h]
@@ -307,13 +330,18 @@ CalculateAssimilation <- function(  iyear,
 
         }
 
+        #M_daily[hoursEating+1] <- (24 - hoursEating) * MET_SMR / 24 # metabolic cost for hours not spent feeding
+
+        total_fitness_filter <- sum(fitness_filter[1:hoursEating])
+        total_fitness_partic <- sum(fitness_partic[1:hoursEating])
+        percentage_partic <- 100 * total_fitness_partic / (total_fitness_partic + total_fitness_filter)
+
 
 
         # convert to kJ and calculate assimilated energy by multiplying by assimilation efficiency
-        i_daily <- i_daily / 1000 
-        A_daily <- i_daily * assimilation
+        #i_daily <- i_daily / 1000 
+        i_daily <- A_daily / assimilation # back calculate ingested weight based on assimilated weight and assimilation efficiency
             
-        M_daily <- M_daily + (24 - hoursEating)/24 * MET_SMR # metabolic cost for hours not spent feeding
 
         #M_daily <- (fitness_partic * MET_SMR * exp(swimming_speed*LENGTH * 0.02) + fitness_filter * MET_SMR * exp(filter_speed*LENGTH * 0.02)) / (fitness_partic + fitness_filter)
         
@@ -322,11 +350,13 @@ CalculateAssimilation <- function(  iyear,
         # store daily values for analysis and plotting
         particulates[iday] <- sum(i_partic)
         filters[iday] <- sum(i_filter)
-        i_dailys[iday] <- i_daily
-        A_dailys[iday] <- A_daily
+        i_dailys[iday] <- sum(i_daily)
+        A_dailys[iday] <- sum(A_daily)
         search_rates[iday] <- pi*(sum(dists)^2)*swimming_speed*60*60 * ( (LENGTH )/100 )
-        h_feeds[iday] <- count
-        M_dailys[iday] <- M_daily
+        h_feeds[iday] <- hoursEating - count
+        M_dailys[iday] <- sum(M_daily)
+        percentages_partic[iday] <- percentage_partic
+
 
         ENERGY_daily[iday] <- ENERGY
         WEIGHT_daily[iday] <- WEIGHT
@@ -334,7 +364,7 @@ CalculateAssimilation <- function(  iyear,
 
         # calculate new values
         # V6 with energy instead and explicit metabolism
-        ENERGY <- k * (A_dailys[iday]) - M_dailys[iday] + ENERGY
+        ENERGY <- k * (A_dailys[iday] - M_dailys[iday]) + ENERGY
         #ENERGY <- k * (A_dailys[iday]) - MET_SMR * exp(swimming_speed*LENGTH * 0.02) + ENERGY
         WEIGHT <- ENERGY / ED
         LENGTH <- (WEIGHT/a1)^(1/a2)
@@ -360,7 +390,7 @@ CalculateAssimilation <- function(  iyear,
     profitability_partic <- arrange(data.frame(profitability = profitability_partic, taxa = prey_name), by = desc(profitability))
 
     # store results for the year in a dataframe to be returned to main model loop
-    results_DF <- data.frame(assimilated_weight = A_dailys, ingested_weight = i_dailys, weight = WEIGHT_daily, length = LENGTH_daily, jd = JulianDayV[1:length(WEIGHT_daily)], feeding_hours = h_feeds, search_rate = search_rates, particulates = particulates, filters = filters, metabolism = M_dailys)
+    results_DF <- data.frame(assimilated_weight = A_dailys, ingested_weight = i_dailys, weight = WEIGHT_daily, length = LENGTH_daily, jd = JulianDayV[1:length(WEIGHT_daily)], feeding_hours = h_feeds, search_rate = search_rates, particulates = particulates, filters = filters, metabolism = M_dailys, percentage_particulates = percentages_partic[iday])
     #plot(-depths[1440:1488], type = "l")
     #plot(-depths, type = "l")
     #plot(depths_daily, type = "l")

@@ -25,7 +25,7 @@ L0 <- (W0/a1)^(1/a2) # initial length in cm
 MaxWEIGHT <- 5 # master trait 
 MaxLENGTH <- 20 # master trait
 k <- 1#/MaxWEIGHT # growth rate  0.025
-mu <- 0.1
+mu <- 10
 lambda <- 0.5 
 
 
@@ -52,7 +52,7 @@ suppressMessages(library(jsonlite))
 locations <- read.delim("data/locations.csv")
 
 # pick location "FoF", "DB", "Shetland", "ECG"
-scenarios <- c("FoF")#, "Shetland", "ECG")
+scenarios <- c("FoF")#,"DB", "Shetland", "ECG")#, "Shetland", "ECG")
 
 # load constants
 CONSTANTS <- read.csv("Model/CONSTANTS.csv")
@@ -125,7 +125,7 @@ for (scenario in scenarios) {
         weight <- results_DF$weight[JD_FINISH]  #results_DF$weight[JD_FINISH] # W0
         length <- results_DF$length[JD_FINISH]  #results_DF$length[JD_FINISH] # L0
         energy <- weight*ED #weight * ED # W0 * ED
-        results_daily_year <- data.frame(year = current_year, assimilated_weight = results_DF$assimilated_weight, ingested_weight = results_DF$ingested_weight, Weight = results_DF$weight, Length = results_DF$length, JulianDay = results_DF$jd, feeding_hours = results_DF$feeding_hours, Metabolism = results_DF$metabolism)
+        results_daily_year <- data.frame(year = current_year, assimilated_weight = results_DF$assimilated_weight, ingested_weight = results_DF$ingested_weight, Weight = results_DF$weight, Length = results_DF$length, JulianDay = results_DF$jd, feeding_hours = results_DF$feeding_hours, Metabolism = results_DF$metabolism, percentage_partic = results_DF$percentage_particulates)
         DF <- rbind(DF,results_daily_year)
         if (weight == 0)
         {
