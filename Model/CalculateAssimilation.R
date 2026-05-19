@@ -42,6 +42,8 @@ CalculateAssimilation <- function(  iyear,
     particulates <- numeric(NoDays)
     filters <- numeric(NoDays)
     percentages_partic <- numeric(NoDays)
+    metabolisms <- numeric(NoDays)
+    assimilations <- numeric(NoDays)
     #depths <- numeric(24*NoDays)
     #depths_daily <- numeric(NoDays)
 
@@ -55,7 +57,7 @@ CalculateAssimilation <- function(  iyear,
         # Calculate factors that update each day not hour (temp data is daily)
         h_feed_max <- DayLengths[iday + NoDays * (iyear - 1)] # hours of daylight
         #h_feed_max <- 24 # for testing with constant day lengths
-        assimilation <- 2*((A1 + A2*temp[iday + NoDays * (iyear - 1)])-Ua) # temp dependent assimilation efficiency
+        assimilation <- 0.43#((A1 + A2*temp[iday + NoDays * (iyear - 1)])-Ua) # temp dependent assimilation efficiency
 
         metabolism <-  M_FEED*Q10_MF^(temp[iday + NoDays * (iyear - 1)] / 10) # temp dependent metabolic cost
         MET_SMR <- WEIGHT^rrr * metabolism # standard metabolic cost for 24h
@@ -356,6 +358,8 @@ CalculateAssimilation <- function(  iyear,
         h_feeds[iday] <- hoursEating - count
         M_dailys[iday] <- sum(M_daily)
         percentages_partic[iday] <- percentage_partic
+        metabolisms[iday] <- metabolism
+        assimilations[iday] <- assimilation
 
 
         ENERGY_daily[iday] <- ENERGY
@@ -390,7 +394,7 @@ CalculateAssimilation <- function(  iyear,
     profitability_partic <- arrange(data.frame(profitability = profitability_partic, taxa = prey_name), by = desc(profitability))
 
     # store results for the year in a dataframe to be returned to main model loop
-    results_DF <- data.frame(assimilated_weight = A_dailys, ingested_weight = i_dailys, weight = WEIGHT_daily, length = LENGTH_daily, jd = JulianDayV[1:length(WEIGHT_daily)], feeding_hours = h_feeds, search_rate = search_rates, particulates = particulates, filters = filters, metabolism = M_dailys, percentage_particulates = percentages_partic[iday])
+    results_DF <- data.frame(assimilated_weight = A_dailys, ingested_weight = i_dailys, weight = WEIGHT_daily, length = LENGTH_daily, jd = JulianDayV[1:length(WEIGHT_daily)], feeding_hours = h_feeds, search_rate = search_rates, particulates = particulates, filters = filters, metabolism = M_dailys, percentage_particulates = percentages_partic[iday], metaConst = metabolisms, assimilation = assimilations)
     #plot(-depths[1440:1488], type = "l")
     #plot(-depths, type = "l")
     #plot(depths_daily, type = "l")

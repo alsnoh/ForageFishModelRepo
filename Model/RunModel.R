@@ -7,7 +7,7 @@
 #~~~~~~~~~~~ INITIAL SETUP ~~~~~~~~~~#
 
 # clear environment
-rm(list = ls())
+#rm(list = ls())
 
 
 #Julian days at start and end of model
@@ -125,7 +125,7 @@ for (scenario in scenarios) {
         weight <- results_DF$weight[JD_FINISH]  #results_DF$weight[JD_FINISH] # W0
         length <- results_DF$length[JD_FINISH]  #results_DF$length[JD_FINISH] # L0
         energy <- weight*ED #weight * ED # W0 * ED
-        results_daily_year <- data.frame(year = current_year, assimilated_weight = results_DF$assimilated_weight, ingested_weight = results_DF$ingested_weight, Weight = results_DF$weight, Length = results_DF$length, JulianDay = results_DF$jd, feeding_hours = results_DF$feeding_hours, Metabolism = results_DF$metabolism, percentage_partic = results_DF$percentage_particulates)
+        results_daily_year <- data.frame(year = current_year, assimilated_weight = results_DF$assimilated_weight, ingested_weight = results_DF$ingested_weight, Weight = results_DF$weight, Length = results_DF$length, JulianDay = results_DF$jd, feeding_hours = results_DF$feeding_hours, Metabolism = results_DF$metabolism, percentage_partic = results_DF$percentage_particulates, metaConst = results_DF$metaConst, assimilation = results_DF$assimilation)
         DF <- rbind(DF,results_daily_year)
         if (weight == 0)
         {
