@@ -11,8 +11,8 @@
 
 
 #Julian days at start and end of model
-JD_ADDED <- 1 #141 
-JD_FINISH <- 365 #212
+JD_ADDED <- 141 #141 
+JD_FINISH <- 212 #212
 
 # initial weight and length
 #linear regression parameters for length-weight relationship
@@ -25,7 +25,7 @@ L0 <- (W0/a1)^(1/a2) # initial length in cm
 MaxWEIGHT <- 5 # master trait 
 MaxLENGTH <- 20 # master trait
 k <- 1#/MaxWEIGHT # growth rate  0.025
-mu <- 10
+mu <- 0
 lambda <- 0.5 
 
 
@@ -52,7 +52,7 @@ suppressMessages(library(jsonlite))
 locations <- read.delim("data/locations.csv")
 
 # pick location "FoF", "DB", "Shetland", "ECG"
-scenarios <- c("FoF")#,"DB", "Shetland", "ECG")#, "Shetland", "ECG")
+scenarios <- c("FoF","DB", "Shetland", "ECG")#, "Shetland", "ECG")
 
 # load constants
 CONSTANTS <- read.csv("Model/CONSTANTS.csv")
@@ -88,7 +88,7 @@ for (scenario in scenarios) {
     weight <- W0
     length <- L0
     # Main model loop, calculating model results for each year
-    for (iyear in 1:15) {  #  1:length(ModelRunLengths)
+    for (iyear in 1:length(ModelRunLengths)) {  #  1:length(ModelRunLengths)
 
 
         NoDays <- ModelRunLengths[iyear]
@@ -101,9 +101,9 @@ for (scenario in scenarios) {
                                             NoDays, 
                                             MaxWEIGHT, 
                                             MaxLENGTH,
-                                            tempConst, #tempConst for controlled experiments, temp for actual data
+                                            temp, #tempConst for controlled experiments, temp for actual data
                                             #assimilationV,
-                                            prey_abundanceConst, #prey_abundanceConst for controlled experiments, prey_abundance for actual data
+                                            prey_abundance, #prey_abundanceConst for controlled experiments, prey_abundance for actual data
                                             prey_size, 
                                             prey_energy, 
                                             prey_ed, 
@@ -111,8 +111,8 @@ for (scenario in scenarios) {
                                             prey_image_area,
                                             prey_name, 
                                             JulianDayV, 
-                                            DayLengthsConst, #DayLengthsConst for controlled experiments, DayLengths for actual data
-                                            lightConst, #lightConst
+                                            DayLengths, #DayLengthsConst for controlled experiments, DayLengths for actual data
+                                            light, #lightConst
                                             a_c,
                                             mu,
                                             lambda,
@@ -122,9 +122,9 @@ for (scenario in scenarios) {
                                             z)
 
         # Reset initial conditions every year or leave the same if you want to see the effect of growth over several years
-        weight <- results_DF$weight[JD_FINISH]  #results_DF$weight[JD_FINISH] # W0
-        length <- results_DF$length[JD_FINISH]  #results_DF$length[JD_FINISH] # L0
-        energy <- weight*ED #weight * ED # W0 * ED
+        weight <- W0  #results_DF$weight[JD_FINISH] # W0
+        length <- L0  #results_DF$length[JD_FINISH] # L0
+        energy <- W0*ED #weight * ED # W0 * ED
         results_daily_year <- data.frame(year = current_year, assimilated_weight = results_DF$assimilated_weight, ingested_weight = results_DF$ingested_weight, Weight = results_DF$weight, Length = results_DF$length, JulianDay = results_DF$jd, feeding_hours = results_DF$feeding_hours, Metabolism = results_DF$metabolism, percentage_partic = results_DF$percentage_particulates, metaConst = results_DF$metaConst, assimilation = results_DF$assimilation)
         DF <- rbind(DF,results_daily_year)
         if (weight == 0)

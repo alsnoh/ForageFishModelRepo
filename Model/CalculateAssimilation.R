@@ -57,7 +57,7 @@ CalculateAssimilation <- function(  iyear,
         # Calculate factors that update each day not hour (temp data is daily)
         h_feed_max <- DayLengths[iday + NoDays * (iyear - 1)] # hours of daylight
         #h_feed_max <- 24 # for testing with constant day lengths
-        assimilation <- 0.43#((A1 + A2*temp[iday + NoDays * (iyear - 1)])-Ua) # temp dependent assimilation efficiency
+        assimilation <- ((A1 + A2*temp[iday + NoDays * (iyear - 1)])-Ua) # temp dependent assimilation efficiency
 
         metabolism <-  M_FEED*Q10_MF^(temp[iday + NoDays * (iyear - 1)] / 10) # temp dependent metabolic cost
         MET_SMR <- WEIGHT^rrr * metabolism # standard metabolic cost for 24h

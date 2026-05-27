@@ -1,7 +1,7 @@
 rm(list = ls())
 # set multiples of 10% change (set n <- c(1,2) if testing min and max value)
-n <- c(-5,-4.5,-4,-3.5,-3,-2.5,-2,-1.5,-1,-0.5,0,0.5,1,1.5,2,2.5,3,3.5,4,4.5,5) # for 10% increments
-
+#n <- c(-5,-4.5,-4,-3.5,-3,-2.5,-2,-1.5,-1,-0.5,0,0.5,1,1.5,2,2.5,3,3.5,4,4.5,5) # for 10% increments
+n <- c(-9)#,-8.5,-8,-7.5,-7,-6.5,-6,-5.5) # 
 # Create data frames for metrics
 FoF_trend <- data.frame()
 ECG_FoF_ratios <- data.frame()
@@ -87,4 +87,4 @@ for (par in pars) {
 # write.csv(Shetland_trend, "Results/Shetland_trend_MinMax.csv", row.names = FALSE)
 #write.csv(Shetland_trend, "Results/Shetland_trend_241.csv", row.names = FALSE)
 
-write.csv(asymInvestigation, "Results/asymInvestigationA1.csv", row.names = FALSE)
+write.csv(asymInvestigation, "Results/asymInvestigationA1Test.csv", row.names = FALSE)
