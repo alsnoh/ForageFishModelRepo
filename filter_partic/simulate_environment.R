@@ -4,12 +4,12 @@
 NoTaxa = 1
 
 
-prey_size = rep(2.7, NoTaxa)
+prey_size = rep(2.7, NoTaxa) # 2.7
 prey_energy = rep(2.816, NoTaxa)
 prey_ed = rep(4400, NoTaxa) # J/g
 prey_mode = rep(1, NoTaxa) #prey_mode = as.numeric(prey_info$mode)
-prey_image_area = rep(1.61, NoTaxa)
-prey_name <- rep("Taxon1", NoTaxa)
+prey_image_area = rep(1.61, NoTaxa) #1.61
+prey_name <- rep("CF", NoTaxa)
 
 z = CONSTANTS$value[CONSTANTS$Parameter == "z"] # depth
 

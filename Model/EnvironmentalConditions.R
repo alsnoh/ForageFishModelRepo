@@ -21,24 +21,6 @@ prey_name <- prey_info$taxa
 ### visual parameters ### 
 z = CONSTANTS$value[CONSTANTS$Parameter == "z"] # depth
 
-
-#  prey abundance data for length of model run
-  prey_abundance = read.csv(paste0("data/abundanceData/abundance_", scenario, ".csv"))
-  prey_abundance = prey_abundance[prey_abundance$jd >= JD_ADDED & prey_abundance$jd <= JD_FINISH,]
-  years <- prey_abundance$year
-  
- 
-  
-  prey_abundanceConst <- prey_abundance[,4:ncol(prey_abundance)]
-  prey_abundanceConst <- matrix(colMeans(prey_abundanceConst, na.rm = TRUE))
-  ones <- matrix(rep(1, nrow(prey_abundance)), ncol = 1)
-  prey_abundanceConst <- t(tcrossprod(prey_abundanceConst, ones))
-  prey_abundanceConst <- mutate(data.frame(prey_abundanceConst), obs = prey_abundance[,1], year = years, jd = prey_abundance$jd, .before = 1)
-  
-
-  # input id (if several scenarios are run in sequence)
-  input_id <- 1:sum(prey_abundance$jd == JD_ADDED)
-  
   
   # latitude for day lengths
   latitude = locations$centre_lat[locations$loc == scenario]
@@ -51,6 +33,28 @@ z = CONSTANTS$value[CONSTANTS$Parameter == "z"] # depth
   tempAvg <- aggregate(temp ~ year, data = tempAvg, FUN = mean)
   # constant temp
   tempConst <- rep(mean(temp, na.rm = TRUE), length(temp)) 
+
+  years <- year(tempCSV$date[yday(tempCSV$date) >= JD_ADDED & yday(tempCSV$date)<= JD_FINISH])
+
+  #  prey abundance data for length of model run
+  #prey_abundance = read.csv(paste0("data/abundanceData/abundance_", scenario, ".csv"))
+  prey_abundance <- read.csv("data/abundanceData/abundance_NS_500.csv")
+  prey_abundance <- prey_abundance[prey_abundance$year >= year(tempCSV$date[1]) & prey_abundance$year <= year(tempCSV$date[nrow(tempCSV)]),]
+  prey_abundance = prey_abundance[prey_abundance$jd >= JD_ADDED & prey_abundance$jd <= JD_FINISH,]
+  prey_abundance <- prey_abundance[prey_abundance$year %in% unique(years),]
+  #years <- prey_abundance$year
+  
+ 
+  
+  prey_abundanceConst <- prey_abundance[,4:ncol(prey_abundance)]
+  prey_abundanceConst <- matrix(colMeans(prey_abundanceConst, na.rm = TRUE))
+  ones <- matrix(rep(1, nrow(prey_abundance)), ncol = 1)
+  prey_abundanceConst <- t(tcrossprod(prey_abundanceConst, ones))
+  prey_abundanceConst <- mutate(data.frame(prey_abundanceConst), obs = prey_abundance[,1], year = years, jd = prey_abundance$jd, .before = 1)
+  
+
+  # input id (if several scenarios are run in sequence)
+  input_id <- 1:sum(prey_abundance$jd == JD_ADDED)
     
   # day lengths
   DayLengths = rep( round(daylength(latitude, JD_ADDED:JD_FINISH)), max(input_id))

@@ -12,7 +12,7 @@ rm(list = ls())
 
 #Julian days at start and end of model
 JD_ADDED <- 141 #141 
-JD_FINISH <- 212 #212
+JD_FINISH <- 300 #212
 
 # initial weight and length
 #linear regression parameters for length-weight relationship
@@ -22,7 +22,7 @@ W0 <- 6 # 0.18 initial weight in g
 L0 <- (W0/a1)^(1/a2) # initial length in cm 
 
 # parameters
-k <- 1.7#/MaxWEIGHT # g
+k <- 1.5#/MaxWEIGHT # g
 mu <- 0
 lambda <- 0.5 
 
@@ -50,7 +50,7 @@ suppressMessages(library(jsonlite))
 locations <- read.delim("data/locations.csv")
 
 # pick location "FoF", "DB", "Shetland", "ECG"
-scenarios <- c("FoF")#,"DB", "Shetland", "ECG")#, "Shetland", "ECG")
+scenarios <- c("ECG")#,"DB", "Shetland", "ECG")#, "Shetland", "ECG")
 
 # load constants
 CONSTANTS <- read.csv("Model/CONSTANTS.csv")
@@ -86,7 +86,7 @@ for (scenario in scenarios) {
     weight <- W0
     length <- L0
     # Main model loop, calculating model results for each year
-    for (iyear in 1:1) {  #  1:length(ModelRunLengths)
+    for (iyear in 1:length(ModelRunLengths)) {  #  1:length(ModelRunLengths)
 
 
         NoDays <- ModelRunLengths[iyear]
@@ -115,10 +115,10 @@ for (scenario in scenarios) {
                                             energy)
 
         # Reset initial conditions every year or leave the same if you want to see the effect of growth over several years
-        weight <- W0 #results_DF$weight[JD_FINISH] # W0
+        weight <- W0  #results_DF$weight[JD_FINISH] # W0
         length <- L0  #results_DF$length[JD_FINISH] # L0
         energy <- W0 * ED #weight * ED # W0 * ED
-        results_daily_year <- data.frame(year = current_year, assimilated_weight = results_DF$assimilated_weight, ingested_weight = results_DF$ingested_weight, Weight = results_DF$weight, Length = results_DF$length, JulianDay = results_DF$jd, feeding_hours = results_DF$feeding_hours, Metabolism = results_DF$metabolism, percentage_partic = results_DF$percentage_particulates, metaConst = results_DF$metaConst, assimilation = results_DF$assimilation)
+        results_daily_year <- data.frame(year = current_year, assimilated_weight = results_DF$assimilated_weight, ingested_weight = results_DF$ingested_weight, Weight = results_DF$weight, Length = results_DF$length, JulianDay = results_DF$jd, feeding_hours = results_DF$feeding_hours, Metabolism = results_DF$metabolism, percentage_partic = results_DF$percentage_particulates, metaConst = results_DF$metaConst, assimilation = results_DF$assimilation, gape_size = results_DF$gape_size)
         DF <- rbind(DF,results_daily_year)
         if (weight == 0)
         {

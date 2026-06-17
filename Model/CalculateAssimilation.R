@@ -39,6 +39,7 @@ CalculateAssimilation <- function(  iyear,
     percentages_partic <- numeric(NoDays)
     metabolisms <- numeric(NoDays)
     assimilations <- numeric(NoDays)
+    gape_sizes <- numeric(NoDays)
     #depths <- numeric(24*NoDays)
     #depths_daily <- numeric(NoDays)
 
@@ -50,32 +51,19 @@ CalculateAssimilation <- function(  iyear,
         JulianDay <- JulianDayV[iday]
 
         # Calculate factors that update each day not hour (temp data is daily)
-        h_feed_max <- DayLengths[iday + NoDays * (iyear - 1)] # hours of daylight
-        #h_feed_max <- 24 # for testing with constant day lengths
+        daylength <- DayLengths[iday + NoDays * (iyear - 1)] # hours of daylight
         assimilation <- ((A1 + A2*temp[iday + NoDays * (iyear - 1)])-Ua) # temp dependent assimilation efficiency
 
         metabolism <-  M_FEED*Q10_MF^(temp[iday + NoDays * (iyear - 1)] / 10) # temp dependent metabolic cost
         MET_SMR <- WEIGHT^rrr * metabolism # standard metabolic cost for 24h
 
-        # calculate hours feeding based on length relative to max length (can be switched off by setting h_feed = h_feed_max)
-        # assumes fish forage less as they approach max length
-        # feeding_time_fraction <- (MaxLENGTH-LENGTH)/MaxLENGTH 
-        # if(feeding_time_fraction < 0)
-        # {
-        #      feeding_time_fraction <- 0
-        # }
-        #h_feed <- ceiling(h_feed_max * feeding_time_fraction) # hours spent feeding
-        #hoursEating <- ceiling(24 * feeding_time_fraction) # for testing with constant day lengths
-        #h_feed <- h_feed_max # hours spent feeding
         h_feed <- 24
 
         # Light and turbidity (beam attenuation)
         # Either used daily avg light data or this crudely simulated diel light
-        light_sim <- simulateLight(light[iday + NoDays * (iyear - 1)], h_feed_max) # lightConst for controlled experiments, light for actual data
+        light_sim <- simulateLight(light[iday + NoDays * (iyear - 1)], daylength) 
         #light_sim <- numeric(h_feed) 
-        #light_sim[1:h_feed_max] <- light[iday + NoDays * (iyear - 1)] # for testing with no diel cycle just constant light during daylight hours
-
-
+        #light_sim[1:daylength] <- light[iday + NoDays * (iyear - 1)] # for testing with no diel cycle just constant light during daylight hours
         ac = a_c[iday]
         ab <- (ac - 0.04)/0.2; # beam attenuation
         light_at_depth <- numeric(h_feed)
@@ -118,18 +106,13 @@ CalculateAssimilation <- function(  iyear,
 
         # calculate gape size and multiply by filter speed (assumed to be slower than swimming speed per hour for particulate feeding),
         # constant efficiency currently set arbitrarily, and filtered food  
-        # Ag_frac <- 0.05
-        # gape_radius_max <- Ag_frac * MaxLENGTH *10
-        # gape_max <- pi * gape_radius_max^2 / 1000000 # convert to m^2
-        # gape_size <- gape_max * LENGTH/((MaxLENGTH/200)+LENGTH) # gape size increases with length but asymptotes at gape_max
-
-        gape_radius <- 0.5*Ag2*LENGTH#0.5*( 0.108883*LENGTH*10-0.0007684)#0.5*(Ag1*(LENGTH*10)^2 + Ag2*LENGTH*10) # Ag2*LENGTH*5  # -2.625+0.1731*(LENGTH)-0.0003099*(LENGTH*10)^2 Gape width as function of length for horse mackerel
+        gape_radius <- 0.5*Ag1*LENGTH#0.5*( 0.108883*LENGTH*10-0.0007684)#0.5*(Ag1*(LENGTH*10)^2 + Ag2*LENGTH*10) # Ag2*LENGTH*5  # -2.625+0.1731*(LENGTH)-0.0003099*(LENGTH*10)^2 Gape width as function of length for horse mackerel
         gape_size <- pi * (gape_radius * 0.001)^2 # convert to area m^2
         for (hour in 1:h_feed) 
         {
 
             ambient_mult = exp(-ac*z)
-            light_at_depth[hour] <- light[1]# * ambient_mult #light[1] #light_sim[hour] * ambient_mult 
+            light_at_depth[hour] <- light_sim[hour] * ambient_mult # * ambient_mult #light[1] #light_sim[hour] * ambient_mult 
 
             if (light_at_depth[hour] > 10)
             {
@@ -181,7 +164,7 @@ CalculateAssimilation <- function(  iyear,
                 detection_distance <- getr(ab, 
                                         (prey_image_area[itaxa]/1000000),
                                         E,
-                                        light_at_depth[hour], # lightConst for controlled experiments, light for actual data
+                                        light_at_depth[hour], 
                                         kR,
                                         0.001) # tolerance
             
@@ -269,8 +252,8 @@ CalculateAssimilation <- function(  iyear,
         for(h in 1:h_feed)  
         {   
             # fitness is calculated as intake minus metabolic cost for the hour
-            fitness_partic[h] <- 24 * A_partic[h] / (particMeta * (1+mu)) #max(A_partic[h] - particMeta/24, 0)
-            #fitness_filter[h] <- 24 * A_filter[h] / (filterMeta[h] * (1+mu)) #max(A_filter[h] - filterMeta[h]/24, 0)
+            fitness_partic[h] <- 24 * A_partic[h] / (particMeta * (1)) #max(A_partic[h] - particMeta/24, 0)
+            fitness_filter[h] <- 24 * A_filter[h] / (filterMeta[h] * (1+mu)) #max(A_filter[h] - filterMeta[h]/24, 0)
             #fitness_hiding[h] <- 24 / MET_SMR #-MET_SMR/24 # fitness of hiding is negative metabolic cost with no intake
 
             #fitness_filter[h] <- 0 # for testing without filter feeding
@@ -285,18 +268,6 @@ CalculateAssimilation <- function(  iyear,
         count <- 0
         for(hh in 1:h_feed){
 
-             # weighted average of particulate and filter feeding intake based on relative fitness
-             # if neither profitable then no intake for that hour, if one is profitable and the other isn't then just the profitable one contributes to intake, if both are profitable then weighted average of the two based on relative fitness
-            # if (fitnessParticDF$fitness_partic[hh] <= -MET_SMR/24 && fitnessFilterDF$fitness_filter[hh] <= -MET_SMR/24)
-            # {
-            #     M_daily <- M_daily + 1/24 * MET_SMR
-            # } else
-            # {
-            # # weighted average of particulate and filter feeding intake based on relative fitness
-            #     A_daily[hh] <- fitnessParticDF$assimilation_partic[hh] #(fitnessParticDF$fitness_partic[hh] * fitnessParticDF$assimilation_partic[hh] + fitnessFilterDF$fitness_filter[hh] * fitnessFilterDF$assimilation_filter[hh]) / (fitnessParticDF$fitness_partic[hh] + fitnessFilterDF$fitness_filter[hh])
-            #     M_daily[hh] <- fitnessParticDF$meta_partic[hh]#(fitnessParticDF$fitness_partic[hh] * fitnessParticDF$meta_partic[hh] + fitnessFilterDF$fitness_filter[hh] * fitnessFilterDF$meta_filter[hh]) / (fitnessParticDF$fitness_partic[hh] + fitnessFilterDF$fitness_filter[hh])
-            #     count <- count + 1
-            # }
             if ((fitnessParticDF$fitness_partic[hh] + fitnessFilterDF$fitness_filter[hh] + fitness_hiding[hh]) <= 0) # dont eat if no prey
             {
                 A_daily[hh] <- 0
@@ -316,15 +287,6 @@ CalculateAssimilation <- function(  iyear,
                 count <- count + 1
             }
             
-            #M_daily[h_feed+1] <- (24 - h_feed) * MET_SMR / 24 # metabolic cost for hours not spent feeding
-
-            # # or just one or the other for each hour depending on which is higher ingestion
-            # if (i_partic[h] > i_filter) {
-            # i_daily <- i_daily + i_partic[h]
-            # } else {
-            # i_daily <- i_daily + i_filter
-            # }
-
         }
 
         #M_daily[hoursEating+1] <- (24 - hoursEating) * MET_SMR / 24 # metabolic cost for hours not spent feeding
@@ -339,8 +301,6 @@ CalculateAssimilation <- function(  iyear,
         #i_daily <- i_daily / 1000 
         i_daily <- A_daily / assimilation # back calculate ingested weight based on assimilated weight and assimilation efficiency
             
-
-        #M_daily <- (fitness_partic * MET_SMR * exp(swimming_speed*LENGTH * 0.02) + fitness_filter * MET_SMR * exp(filter_speed*LENGTH * 0.02)) / (fitness_partic + fitness_filter)
         
         #depths_daily[iday] <- mean(depths[1 + (iday-1)*h_feed:(iday*h_feed)]) 
 
@@ -355,6 +315,7 @@ CalculateAssimilation <- function(  iyear,
         percentages_partic[iday] <- percentage_partic
         metabolisms[iday] <- metabolism
         assimilations[iday] <- assimilation
+        gape_sizes[iday] <- gape_size
 
 
         ENERGY_daily[iday] <- ENERGY
@@ -389,7 +350,7 @@ CalculateAssimilation <- function(  iyear,
     profitability_partic <- arrange(data.frame(profitability = profitability_partic, taxa = prey_name), by = desc(profitability))
 
     # store results for the year in a dataframe to be returned to main model loop
-    results_DF <- data.frame(assimilated_weight = A_dailys, ingested_weight = i_dailys, weight = WEIGHT_daily, length = LENGTH_daily, jd = JulianDayV[1:length(WEIGHT_daily)], feeding_hours = h_feeds, search_rate = search_rates, particulates = particulates, filters = filters, metabolism = M_dailys, percentage_particulates = percentages_partic, metaConst = metabolisms, assimilation = assimilations, light = light[1], preyAbundance = avgAbundance)
+    results_DF <- data.frame(assimilated_weight = A_dailys, ingested_weight = i_dailys, weight = WEIGHT_daily, length = LENGTH_daily, jd = JulianDayV[1:length(WEIGHT_daily)], feeding_hours = h_feeds, search_rate = search_rates, particulates = particulates, filters = filters, metabolism = M_dailys, percentage_particulates = percentages_partic, metaConst = metabolisms, assimilation = assimilations, light = light[1], preyAbundance = avgAbundance, gape_size = gape_sizes)
     #plot(-depths[1440:1488], type = "l")
     #plot(-depths, type = "l")
     #plot(depths_daily, type = "l")

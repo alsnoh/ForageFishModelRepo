@@ -88,4 +88,4 @@ for (abund in c(1,5,10,50,100,500,1000,5000,10000,50000,100000)) { #seq(1000,100
         DF <- rbind(DF,results)
     }
 }
-write.csv(DF, paste0("Results/light_", light[1], "_weight_", W0, " partic.csv"), row.names = F)
+write.csv(DF, paste0("Results/weight_", W0, "_partic.csv"), row.names = F)
