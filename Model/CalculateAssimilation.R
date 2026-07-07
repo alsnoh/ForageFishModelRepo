@@ -23,7 +23,8 @@ CalculateAssimilation <- function(  iyear,
                                     mu,
                                     LENGTH,
                                     WEIGHT,
-                                    ENERGY) 
+                                    ENERGY,
+                                    WAM) 
 {
 
     i_dailys <- numeric(NoDays)
@@ -322,9 +323,12 @@ CalculateAssimilation <- function(  iyear,
         WEIGHT_daily[iday] <- WEIGHT
         LENGTH_daily[iday] <- LENGTH
 
+        # maturation function
+        maturation <- 1 #/ (1+(WEIGHT/WAM)^(-5))
+
         # calculate new values
         # V6 with energy instead and explicit metabolism
-        ENERGY <- k * (A_dailys[iday] - M_dailys[iday]) + ENERGY
+        ENERGY <- k * (A_dailys[iday] - maturation * M_dailys[iday]) + ENERGY
         #ENERGY <- k * (A_dailys[iday]) - MET_SMR * exp(swimming_speed*LENGTH * 0.02) + ENERGY
         WEIGHT <- ENERGY / ED
         LENGTH <- (WEIGHT/a1)^(1/a2)
