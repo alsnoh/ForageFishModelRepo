@@ -1,5 +1,5 @@
 Parameter,value,Ctype,lower,upper
-A1,2.7,double,0.73,0.91
+A1,4,double,0.73,0.91
 A2,0.0076,double,0.0075,0.0077
 Ua,0.051,double,0.02,0.12
 handling_time,0.0138888888888889,double,0.0111111111111111,0.0166666666666667
@@ -14,7 +14,7 @@ m,-1.9,double,-2,-1.8
 Ag1,1.2,double,0.2,0.4
 filter_fraction,0.1,double,0.3,0.7
 Q10_MF,3.1,double,1.5,3.4
-M_FEED,0.0065,double,0.0025,0.0065
+M_FEED,0.0045,double,0.0025,0.0065
 rrr,0.65,double,0.51,0.79
 ED,5,double,4,6
 k,1,double,1,2

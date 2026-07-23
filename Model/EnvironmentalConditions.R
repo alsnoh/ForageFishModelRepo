@@ -37,8 +37,8 @@ z = CONSTANTS$value[CONSTANTS$Parameter == "z"] # depth
   years <- year(tempCSV$date[yday(tempCSV$date) >= JD_ADDED & yday(tempCSV$date)<= JD_FINISH])
 
   #  prey abundance data for length of model run
-  #prey_abundance = read.csv(paste0("data/abundanceData/abundance_", scenario, ".csv"))
-  prey_abundance <- read.csv("data/abundanceData/abundance_NS_500.csv")
+  prey_abundance = read.csv(paste0("data/abundanceData/abundance_", scenario, ".csv"))
+  #prey_abundance <- read.csv("data/abundanceData/abundance_NS_500.csv")
   prey_abundance <- prey_abundance[prey_abundance$year >= year(tempCSV$date[1]) & prey_abundance$year <= year(tempCSV$date[nrow(tempCSV)]),]
   prey_abundance = prey_abundance[prey_abundance$jd >= JD_ADDED & prey_abundance$jd <= JD_FINISH,]
   prey_abundance <- prey_abundance[prey_abundance$year %in% unique(years),]
