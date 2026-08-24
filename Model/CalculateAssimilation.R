@@ -96,7 +96,8 @@ CalculateAssimilation <- function(  iyear,
             filter_probability <- probability[itaxa] * filter_fraction
 
 
-            abundance[itaxa] <- prey_abundance[iday + NoDays * (iyear - 1), itaxa + 3] # abundance of prey type on given day 
+            #abundance[itaxa] <- prey_abundance[iday + NoDays * (iyear - 1), itaxa + 3] # abundance of prey type on given day
+            abundance[itaxa] <- prey_abundance[iday, itaxa+1] 
             retention_efficiency <- prey_size[itaxa] / (1 + prey_size[itaxa]) # efficiency of retaining prey once captured by filter feeding
 
             filter <- filter + filter_probability * retention_efficiency * prey_energy[itaxa] * abundance[itaxa] #/ prey_ed[itaxa] #for weight not energy
@@ -246,8 +247,8 @@ CalculateAssimilation <- function(  iyear,
 
         
 
-        particMeta <- MET_SMR * exp(swimming_speed*LENGTH * 0.02)
-        filterMeta <- 1.5*MET_SMR * exp(filter_speed*LENGTH * 0.02)
+        particMeta <- MET_SMR * exp(swimming_speed*LENGTH * nu)
+        filterMeta <- fitness_met_mult*MET_SMR * exp(filter_speed*LENGTH * nu)
 
         # loop through all hours of feeding
         A_partic <- assimilation * i_partic
@@ -335,11 +336,12 @@ CalculateAssimilation <- function(  iyear,
 
         # maturation function
         maturation <- 1 / (1+(WEIGHT/WAM)^(-5))
-        reproduction <- 0.1 * WEIGHT
+        reproduction <- repro_coeff * WEIGHT
 
         # calculate new values
         # V6 with energy instead and explicit metabolism
-        ENERGY <- k * (A_dailys[iday] - maturation * M_dailys[iday]) + ENERGY
+        #ENERGY <- k * (A_dailys[iday] - maturation * M_dailys[iday]) + ENERGY
+         ENERGY <- k * (A_dailys[iday] - M_dailys[iday] - maturation * reproduction) + ENERGY
         #ENERGY <- k * (A_dailys[iday]) - MET_SMR * exp(swimming_speed*LENGTH * 0.02) + ENERGY
         WEIGHT <- ENERGY / ED
         LENGTH <- (WEIGHT/a1)^(1/a2)
@@ -356,7 +358,7 @@ CalculateAssimilation <- function(  iyear,
     }
     if (ENERGY == 0)
     {
-        results_DF <- data.frame(assimilated_weight = A_dailys, ingested_weight = i_dailys, weight = WEIGHT_daily, length = LENGTH_daily, jd = JulianDayV[1:length(WEIGHT_daily)], feeding_hours = h_feeds, search_rate = search_rates, particulates = particulates, filters = filters, metabolism = M_dailys, percentage_particulates = percentages_partic, percentage_filters = percentages_filter, percentage_hiding = percentages_hiding)
+        results_DF <- data.frame(assimilated_weight = A_dailys, ingested_weight = i_dailys, weight = WEIGHT_daily, length = LENGTH_daily, energy = ENERGY_daily, jd = JulianDayV[1:length(WEIGHT_daily)], feeding_hours = h_feeds, search_rate = search_rates, particulates = particulates, filters = filters, metabolism = M_dailys, percentage_particulates = percentages_partic, percentage_filters = percentages_filter, percentage_hiding = percentages_hiding)
         return(results_DF)
     }
 
@@ -365,7 +367,7 @@ CalculateAssimilation <- function(  iyear,
     profitability_partic <- arrange(data.frame(profitability = profitability_partic, taxa = prey_name), by = desc(profitability))
 
     # store results for the year in a dataframe to be returned to main model loop
-    results_DF <- data.frame(assimilated_weight = A_dailys, ingested_weight = i_dailys, weight = WEIGHT_daily, length = LENGTH_daily, jd = JulianDayV[1:length(WEIGHT_daily)], feeding_hours = h_feeds, search_rate = search_rates, particulates = particulates, filters = filters, metabolism = M_dailys, percentage_particulates = percentages_partic, percentage_filters = percentages_filter, percentage_hiding = percentages_hiding, metaConst = metabolisms, assimilation = assimilations, light = light[1], preyAbundance = avgAbundance, gape_size = gape_sizes)
+    results_DF <- data.frame(assimilated_weight = A_dailys, ingested_weight = i_dailys, weight = WEIGHT_daily, length = LENGTH_daily, energy = ENERGY_daily, jd = JulianDayV[1:length(WEIGHT_daily)], feeding_hours = h_feeds, search_rate = search_rates, particulates = particulates, filters = filters, metabolism = M_dailys, percentage_particulates = percentages_partic, percentage_filters = percentages_filter, percentage_hiding = percentages_hiding, metaConst = metabolisms, assimilation = assimilations, light = light[1], preyAbundance = avgAbundance, gape_size = gape_sizes)
     #plot(-depths[1440:1488], type = "l")
     #plot(-depths, type = "l")
     #plot(depths_daily, type = "l")

@@ -1,4 +1,4 @@
-A1=4
+A1=0.82
 A2=0.0076
 Ua=0.051
 handling_time=0.0138888888888889
@@ -17,3 +17,9 @@ M_FEED=0.0045
 rrr=0.65
 ED=5
 k=1
+WAM=15
+a1=0.0028
+a2=3.3
+fitness_met_mult=1.5
+nu=0.02
+repro_coeff=0.1
