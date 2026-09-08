@@ -85,13 +85,14 @@ W0 <- 0.18 # 0.18 initial weight in g
 L0 <- (W0/a1)^(1/a2) # initial length in cm 
 
 
-prey_abundance_all = read.csv(paste0("../PlanktonRepo/data/energy_grid_data_average_Atlantic_2x2test.csv"))
-temp_all = read.csv(paste0("../PlanktonRepo/data/temperature_grid_data_raw_Atlantic_2x2test.csv"))
+prey_abundance_all = read.csv(paste0("../PlanktonRepo/data/output/2008-2022_median_2x2.csv"))
+temp_all = read.csv(paste0("../PlanktonRepo/data/output/temp_2008-2022_2x2.csv"))
 scenarios <- unique(prey_abundance_all$location)
 
 for (scenario in scenarios) {
     temp_loc <- temp_all[temp_all$location == scenario,]
-    if (!is.na(sum(temp_loc$temp))) {
+    abundance_loc <- prey_abundance_all[prey_abundance_all$location == scenario,]
+    if (!is.na(sum(temp_loc$temp)) & !is.na(sum(rowSums(abundance_loc)))) {
 
         # setting up food and light data
         source("Model/EnvironmentalConditions.R")
@@ -115,6 +116,7 @@ for (scenario in scenarios) {
 
             NoDays <- ModelRunLengths[iyear]
             current_year <- rep(prey_abundance[1 + NoDays * (iyear - 1),2], NoDays)
+            current_year <- rep(years[1 + NoDays * (iyear - 1)], NoDays)
 
             # Calculate max weight
             #MaxWEIGHT <- CalculateMaxWeight(iyear, NoDays, assimilationV, WEIGHT)
@@ -169,7 +171,7 @@ for (scenario in scenarios) {
     } 
 }
 
-write.csv(all_results, paste0("Results/Atlantic/All_locations_2x2_2008-2022.csv"), row.names = F)
+write.csv(all_results, paste0("Results/Atlantic/All_locations_2x2_2008-2022_test.csv"), row.names = F)
 
 
 

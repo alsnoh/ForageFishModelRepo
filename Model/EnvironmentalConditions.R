@@ -65,7 +65,7 @@ z = CONSTANTS$value[CONSTANTS$Parameter == "z"] # depth
   
 
   # input id (if several scenarios are run in sequence)
-  input_id <- 1:sum(prey_abundance$jd == JD_ADDED)
+  input_id <- 1:sum(tempCSV$doy == JD_ADDED)
     
   # day lengths
   DayLengths = rep( round(daylength(latitude, JD_ADDED:JD_FINISH)), max(input_id))
