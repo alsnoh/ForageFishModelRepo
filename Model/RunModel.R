@@ -4,13 +4,32 @@
 # Predicts the length of fish (currently sandeel) across one growth season as a function of assimilated energy, which is modelled with a functional response for visual foraging
 # It is based on Agnes Olin's model but with many simplifications, including using a structure based on the von bertalanffy equation
 
+#~~~~~~~~~~~ REQUIRED PACKAGES ~~~~~~~~~~#
+
+# suppressMessages(library(geosphere))
+# suppressMessages(library(lubridate))
+# suppressMessages(library(sp))
+# suppressMessages(library(sf))
+# suppressMessages(library(ggplot2))
+# suppressMessages(library(ggpubr))
+# suppressMessages(library(dplyr))
+# suppressMessages(library(colorspace))
+# suppressMessages(library(scales))
+# suppressMessages(library(nlme))
+# suppressMessages(library(MuMIn))
+# suppressMessages(library(jsonlite))
+
+
 #~~~~~~~~~~~ INITIAL SETUP ~~~~~~~~~~#
 
 # clear environment
-rm(list = ls())
+#rm(list = ls())
 
-#run mode (continuous 1 or single year 2)
+# run mode (continuous 1 or single year 2)
 mode <- 2
+
+# experimental mode (pan_Atlantic 1 or time 2)
+exp_mode <- 1
 
 # const environmental conditions (1) or variable environmental conditions (2)
 env_mode <- 2
@@ -34,37 +53,16 @@ JD_ADDED <- jd_added[mode]
 JD_FINISH <- jd_finish[mode]
 
 
-
 # parameters
 #/MaxWEIGHT # g
-mu <- 0
-lambda <- 0.5 
-
+mu <- 0 
 
 DF <- data.frame()
-
-#~~~~~~~~~~~ REQUIRED PACKAGES ~~~~~~~~~~#
-
-suppressMessages(library(geosphere))
-suppressMessages(library(lubridate))
-suppressMessages(library(sp))
-suppressMessages(library(sf))
-suppressMessages(library(ggplot2))
-suppressMessages(library(ggpubr))
-suppressMessages(library(dplyr))
-suppressMessages(library(colorspace))
-suppressMessages(library(scales))
-suppressMessages(library(nlme))
-suppressMessages(library(MuMIn))
-suppressMessages(library(jsonlite))
-
 
 
 # load location data
 locations <- read.delim("data/locations.csv")
 
-# pick location "FoF", "DB", "Shetland", "ECG"
-#scenarios <- c("FoF","DB", "Shetland", "ECG")#, "Shetland", "ECG")
 
 # load constants
 CONSTANTS <- read.csv("Model/CONSTANTS.csv")
@@ -74,6 +72,23 @@ source("Model/HeaderFile.R")
 source("Model/CONSTANTS.R")
 
 
+decade_vec <- c(1980, 1990, 2000, 2010, 2020)
+decade_end_vec <- c(1989, 1999, 2009, 2019, 2022)
+prey_abundance_all <- read.csv(paste0("../PlanktonRepo/data/output/", decade_vec[decade], "-", decade_end_vec[decade], "_median_2x2.csv"))
+temp_all <- read.csv(paste0("../PlanktonRepo/data/output/temp_", decade_vec[decade], "-", decade_end_vec[decade], "_2x2.csv"))
+
+# prey_abundance_all <- read.csv(paste0("../PlanktonRepo/data/output/2008-2022_median_2x2.csv"))
+# temp_all <- read.csv(paste0("../PlanktonRepo/data/output/temp_2008-2022_2x2.csv"))
+
+
+
+switch(exp_mode,
+       scenarios <- unique(prey_abundance_all$location),
+       # pick location "FoF", "DB", "Shetland", "ECG"
+       scenarios <- c("FoF")#,"DB", "Shetland", "ECG")#, "Shetland", "ECG")
+      )
+
+
 # loading function to calculate predicted length for one growth season, based on von bertalanffy
 source("Model/CalculateAssimilation.R")
 
@@ -81,13 +96,11 @@ source("Model/CalculateAssimilation.R")
 
 # initial weight and length
 #linear regression parameters for length-weight relationship
-W0 <- 0.18 # 0.18 initial weight in g
+W0 <- 0.1 * asym_weight # 0.18 initial weight in g
 L0 <- (W0/a1)^(1/a2) # initial length in cm 
 
+# use A1 = 5 for asympototic length 40, weight 545
 
-prey_abundance_all = read.csv(paste0("../PlanktonRepo/data/output/2008-2022_median_2x2.csv"))
-temp_all = read.csv(paste0("../PlanktonRepo/data/output/temp_2008-2022_2x2.csv"))
-scenarios <- unique(prey_abundance_all$location)
 
 for (scenario in scenarios) {
     temp_loc <- temp_all[temp_all$location == scenario,]
@@ -139,7 +152,7 @@ for (scenario in scenarios) {
                                                 length,
                                                 weight,
                                                 energy,
-                                                WAM)
+                                                WAM_ratio)
 
             # Reset initial conditions every year or leave the same if you want to see the effect of growth over several years
             weight_results[[1]] <- results_DF$weight[JD_FINISH]
@@ -152,7 +165,7 @@ for (scenario in scenarios) {
             weight <- weight_results[[mode]]  #results_DF$weight[JD_FINISH] # W0
             length <- length_results[[mode]]  #results_DF$length[JD_FINISH] # L0
             energy <- energy_results[[mode]]  #weight * ED # W0 * ED
-            results_daily_year <- data.frame(year = current_year, assimilated_weight = results_DF$assimilated_weight, ingested_weight = results_DF$ingested_weight, Weight = results_DF$weight, Length = results_DF$length, Energy = results_DF$energy, JulianDay = results_DF$jd)#, feeding_hours = results_DF$feeding_hours, Metabolism = results_DF$metabolism, percentage_partic = results_DF$percentage_particulates, percentage_filters = results_DF$percentage_filters, percentage_hiding = results_DF$percentage_hiding, metaConst = results_DF$metaConst, assimilation = results_DF$assimilation, gape_size = results_DF$gape_size)
+            results_daily_year <- data.frame(year = current_year, assimilated_weight = results_DF$assimilated_weight, ingested_weight = results_DF$ingested_weight, Weight = results_DF$weight, Length = results_DF$length, Energy = results_DF$energy, JulianDay = results_DF$jd, feeding_hours = results_DF$feeding_hours, Metabolism = results_DF$metabolism, percentage_partic = results_DF$percentage_particulates, percentage_filters = results_DF$percentage_filters)#, percentage_hiding = results_DF$percentage_hiding, metaConst = results_DF$metaConst, assimilation = results_DF$assimilation, gape_size = results_DF$gape_size)
             DF <- rbind(DF,results_daily_year)
             if (weight == 0)
             {
@@ -163,7 +176,7 @@ for (scenario in scenarios) {
         }
 
 
-        #source("Model/saveResults.R")
+        source("Model/saveResults.R")
         DF$location <- scenario
         all_results <- rbind(all_results, DF)
         DF <- data.frame()
@@ -171,7 +184,7 @@ for (scenario in scenarios) {
     } 
 }
 
-write.csv(all_results, paste0("Results/Atlantic/All_locations_2x2_2008-2022_test.csv"), row.names = F)
+write.csv(all_results, paste0("Results/Atlantic/2x2_", decade_vec[decade], "-", decade_end_vec[decade], "_A1-",A1,"_temp-",temp_change,"_prey-",prey_field_comp,"_feeding-",feeding_mode,".csv"), row.names = F)
 
 
 

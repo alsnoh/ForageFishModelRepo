@@ -24,7 +24,7 @@ CalculateAssimilation <- function(  iyear,
                                     LENGTH,
                                     WEIGHT,
                                     ENERGY,
-                                    WAM) 
+                                    WAM_ratio) 
 {
 
     i_dailys <- numeric(NoDays)
@@ -95,9 +95,11 @@ CalculateAssimilation <- function(  iyear,
             probability[itaxa] <- 1*(1-(1/(1+exp(-b* (log(prey_size[itaxa] /10.0 ) -  m  )  )))) 
             filter_probability <- probability[itaxa] * filter_fraction
 
-
-            #abundance[itaxa] <- prey_abundance[iday + NoDays * (iyear - 1), itaxa + 3] # abundance of prey type on given day
-            abundance[itaxa] <- prey_abundance[iday, itaxa+1] 
+            switch(exp_mode,
+                   abundance[itaxa] <- prey_abundance[iday, itaxa+1],
+                   abundance[itaxa] <- prey_abundance[iday + NoDays * (iyear - 1), itaxa + 3] # abundance of prey type on given day
+                   )
+             
             retention_efficiency <- prey_size[itaxa] / (1 + prey_size[itaxa]) # efficiency of retaining prey once captured by filter feeding
 
             filter <- filter + filter_probability * retention_efficiency * prey_energy[itaxa] * abundance[itaxa] #/ prey_ed[itaxa] #for weight not energy
@@ -248,7 +250,7 @@ CalculateAssimilation <- function(  iyear,
         
 
         particMeta <- MET_SMR * exp(swimming_speed*LENGTH * nu)
-        filterMeta <- fitness_met_mult*MET_SMR * exp(filter_speed*LENGTH * nu)
+        filterMeta <- fitness_met_mult * MET_SMR * exp(filter_speed*LENGTH * nu)
 
         # loop through all hours of feeding
         A_partic <- assimilation * i_partic
@@ -256,8 +258,8 @@ CalculateAssimilation <- function(  iyear,
         for(h in 1:h_feed)  
         {   
             # fitness is calculated as intake minus metabolic cost for the hour
-            fitness_partic[h] <- (24 * (A_partic[h])) / (particMeta * (1+mu)) #max(A_partic[h] - particMeta/24, 0)
-            fitness_filter[h] <- (24 * (A_filter[h])) / (filterMeta[h] * (1+mu)) #max(A_filter[h] - filterMeta[h]/24, 0)
+            switch(feeding_mode, fitness_partic[h] <- (24 * (A_partic[h])) / (particMeta * (1+mu)), fitness_partic[h] <- 0, fitness_partic[h] <- (24 * (A_partic[h])) / (particMeta * (1+mu))) #max(A_partic[h] - particMeta/24, 0)
+            switch(feeding_mode, fitness_filter[h] <- (24 * (A_filter[h])) / (filterMeta[h] * (1+mu)), fitness_filter[h] <- (24 * (A_filter[h])) / (filterMeta[h] * (1+mu)), fitness_filter[h] <- 0) #max(A_filter[h] - filterMeta[h]/24, 0)
             #fitness_hiding[h] <- 24 / MET_SMR #-MET_SMR/24 # fitness of hiding is negative metabolic cost with no intake
 
             #fitness_filter[h] <- 0 # for testing without filter feeding
@@ -335,13 +337,14 @@ CalculateAssimilation <- function(  iyear,
         LENGTH_daily[iday] <- LENGTH
 
         # maturation function
+        WAM <- WAM_ratio * asym_weight
         maturation <- 1 / (1+(WEIGHT/WAM)^(-5))
         reproduction <- repro_coeff * WEIGHT
 
         # calculate new values
         # V6 with energy instead and explicit metabolism
         #ENERGY <- k * (A_dailys[iday] - maturation * M_dailys[iday]) + ENERGY
-         ENERGY <- k * (A_dailys[iday] - M_dailys[iday] - maturation * reproduction) + ENERGY
+         ENERGY <- (A_dailys[iday] - M_dailys[iday] - maturation * reproduction) + ENERGY
         #ENERGY <- k * (A_dailys[iday]) - MET_SMR * exp(swimming_speed*LENGTH * 0.02) + ENERGY
         WEIGHT <- ENERGY / ED
         LENGTH <- (WEIGHT/a1)^(1/a2)

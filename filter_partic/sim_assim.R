@@ -25,14 +25,14 @@ rm(list = ls())
 #linear regression parameters for length-weight relationship
 a1 <- 0.0028#exp(-6.8488)
 a2 <- 3.3#3.4943
-W0 <- 6 # 0.18 initial weight in g
+W0 <- 50 # 0.18 initial weight in g
 L0 <- (W0/a1)^(1/a2) # initial length in cm 
 
 # parameters
 k <- 1.7#/MaxWEIGHT # g
 mu <- 0
 lambda <- 0.5 
-
+exp_mode <- 2 # pan_Atlantic 1 or time 2
 # load constants
 CONSTANTS <- read.csv("Model/CONSTANTS.csv")
 
@@ -82,10 +82,11 @@ for (abund in c(1,5,10,50,100,500,1000,5000,10000,50000,100000)) { #seq(1000,100
                                             mu,
                                             length,
                                             weight,
-                                            energy)
+                                            energy,
+                                            WAM)
 
         results <- data.frame(assimilated_energy = results_DF$assimilated_weight, particulates = results_DF$particulates, filters = results_DF$filters, percentage = results_DF$percentage_particulates, light = results_DF$light, abundance = results_DF$preyAbundance)
         DF <- rbind(DF,results)
     }
 }
-write.csv(DF, paste0("Results/weight_", W0, "_partic.csv"), row.names = F)
+write.csv(DF, paste0("Results/weight_", W0, "_filter.csv"), row.names = F)
